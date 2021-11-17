@@ -7,7 +7,7 @@
     "start": "yarn ts-node src/start.ts"
   },
   "dependencies": {
-    "@cord.network/api": "0.5.2-2",
+    "@cord.network/api": "0.5.2-3",
     "@multiformats/blake2": "^1.0.5",
     "multiformats": "^9.4.7",
     "yargs": "^17.2.1"

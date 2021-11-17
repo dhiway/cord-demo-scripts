@@ -108,6 +108,7 @@ async function main() {
   );
 
   let streamCreationExtrinsic = await newStream.store();
+
   console.log(`\n📧 Stream On-Chain Details`);
   console.dir(newStream, { depth: null, colors: true });
 
