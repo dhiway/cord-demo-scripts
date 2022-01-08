@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "name": "Demo Sell",
+    "properties": {
+        "invoice": {
+            "type": "string"
+        },
+        "buyer": {
+            "type": "string"
+        },
+        "sellerDetails": {
+            "type": "string"
+        },
+        "price": {
+            "type": "string"
+        },
+	"sku": {
+	    "type": "string"
+	}
+    },
+    "type": "object"
+}

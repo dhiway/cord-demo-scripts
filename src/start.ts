@@ -205,7 +205,7 @@ async function main() {
   for (let i = 0; !Number(argv.loop) || i < Number(argv.loop); i++) {
     console.log(`\🏷  Mark `, i);
 
-    sleep(between(3000, 20000));
+    sleep(between(3, 20));
 
     console.log(`\n✉️  Adding a new Credential`, "\n");
     let credStream = {

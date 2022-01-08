@@ -10,10 +10,14 @@ import { create as ipfs_create } from 'ipfs-http-client';
 
 const { DEMO_KEY_URI, DEMO_WSS_ADDR, DEMO_IPFS_HOST, DEMO_IPFS_PORT, DEMO_IPFS_PROTO } = process.env;
 
-function sleep(ms: number) {
+function sleep(s: number) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+    setTimeout(resolve, s * 1000);
   });
+}
+
+function between(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min) + min);
 }
 
 async function main() {
@@ -182,27 +186,43 @@ async function main() {
     console.log(e.errorCode, "-", e.message);
   }
 
-  /*
+  let tvbrands = [ "Sony", "Samsung", "LG", "mi", "MRL", "Onida", "Wu", "Panasonic" ];
+  let tvnames = [ "TV 32\"", "TV 40\"", "TV 43\"", "TV 46\"", "TV 55\"", "TV 65\"" ];
+  let models = [ "2021", "2022" ];
+
+    let products: any = [];
+    let productContents: any = [];
+  await Promise.all(tvbrands.map(async (b) => {
+      await Promise.all(tvnames.map(async (n) => {
+          await Promise.all(models.map(async (m) => {
+	      
   // Step 2: Create a new Stream
-  console.log(`\n✉️  Adding a new Stream`, "\n");
+  console.log(`\n✉️  Adding new Stream`, "\n");
   let content = {
-    name: "Alice",
-    age: 29,
-    gender: "Female",
-    country: "India",
-    credit: 1000,
+      name: n,
+      description: "Best Television in the World",
+      countryOfOrigin: "India",
+      gtin: UUID.generate(),
+      brand: b,
+      manufacturer: b,
+      model: m,
+      sku: UUID.generate(),
+      price: `${between(15000, 200000)}`,
+      aggregateRating: "0",
   };
   let schemaStream = cord.Content.fromSchemaAndContent(
     newSchema,
     content,
-    employeeIdentity.address
+    //m === "2021" ? seller1.address : seller2.address
+    ondc.address,
   );
   console.log(`📧 Stream Details `);
   console.dir(schemaStream, { depth: null, colors: true });
 
   let newStreamContent = cord.ContentStream.fromStreamContent(
     schemaStream,
-    employeeIdentity
+    //m === "2021" ? seller1 : seller2
+    ondc,
   );
   console.log(`\n📧 Hashed Stream `);
   console.dir(newStreamContent, { depth: null, colors: true });
@@ -222,13 +242,13 @@ async function main() {
   console.dir(newStream, { depth: null, colors: true });
 
   console.log("\n⛓  Anchoring Stream to the chain...");
-  console.log(`🔑 Creator: ${employeeIdentity.address} `);
-  console.log(`🔑 Controller: ${entityIdentity.address} `);
+  console.log(`🔑 Creator: ${seller1.address} `);
+  console.log(`🔑 Controller: ${ondc.address} `);
 
   try {
     await cord.ChainUtils.signAndSubmitTx(
       streamCreationExtrinsic,
-      entityIdentity,
+      ondc,
       {
         resolveOn: cord.ChainUtils.IS_IN_BLOCK,
       }
@@ -237,15 +257,21 @@ async function main() {
   } catch (e: any) {
     console.log(e.errorCode, "-", e.message);
   }
+	      productContents.push(newStreamContent);
+	      products.push(newStream);
+	  }));
+      }));
+  }));
 
+    
   // Step 3: Create a new Credential and Link to the Stream
   console.log(`\n\n✉️  Adding a new Credential Schema \n`);
-  let credSchema = require("../res/cred-schema.json");
+  let credSchema = require("../res/ondc-sell-schema.json");
   credSchema.name = credSchema.name + ":" + UUID.generate();
 
   let credSchemaStream = cord.Schema.fromSchemaProperties(
     credSchema,
-    employeeIdentity.address
+    ondc.address
   );
 
   bytes = json.encode(credSchemaStream);
@@ -260,7 +286,7 @@ async function main() {
   try {
     await cord.ChainUtils.signAndSubmitTx(
       credSchemaCreationExtrinsic,
-      entityIdentity,
+      ondc,
       {
         resolveOn: cord.ChainUtils.IS_IN_BLOCK,
       }
@@ -270,55 +296,67 @@ async function main() {
     console.log(e.errorCode, "-", e.message);
   }
 
-  console.log(`\n✉️  Adding a new Credential`, "\n");
-  let credStream = {
-    name: newStreamContent.content.contents.name,
-    country: newStreamContent.content.contents.country,
-  };
+    let soldProducts: any = [];
+    for (let i = 0; i < 10; i++) {
+	let idx: number = between(0,90);
+	let product = productContents[idx];
+	let prodStream = products[idx];
 
-  let credStreamContent = cord.Content.fromSchemaAndContent(
-    credSchemaStream,
-    credStream,
-    employeeIdentity.address
-  );
+	console.log(`\n✉️  Adding a new Credential`, "\n");
+	let credStream = {
+	    sku: product.content.contents.sku,
+	    price: product.content.contents.product,
+	    sellerDetails: seller1.address,
+	    buyer: idx % 2 ? buyer1.address : buyer2.address,
+	    invoice: UUID.generate()
+	};
 
-  let credContentStream = cord.ContentStream.fromStreamContent(
-    credStreamContent,
-    employeeIdentity,
-    {
-      holder: holderIdentity.address,
-      link: newStream.id,
+	let credStreamContent = cord.Content.fromSchemaAndContent(
+	    credSchemaStream,
+	    credStream,
+	    seller1.address
+	);
+
+	let credContentStream = cord.ContentStream.fromStreamContent(
+	    credStreamContent,
+	    seller1,
+	    {
+		holder: idx % 2 ? buyer1.address : buyer2.address,
+		link: prodStream.id,
+	    }
+	);
+	console.log(`\n📧 Hashed Stream Details`);
+	console.dir(credContentStream, { depth: null, colors: true });
+	
+	bytes = json.encode(credContentStream);
+	encoded_hash = await hasher.digest(bytes);
+	const credStreamCid = CID.create(1, 0xb220, encoded_hash);
+	
+	let credStreamTx = cord.Stream.fromContentStreamProperties(
+	    credContentStream,
+	    credStreamCid.toString()
+	);
+
+	let credStreamCreationExtrinsic = await credStreamTx.store();
+	console.log(`\n📧 Credential On-Chain Details`);
+	console.dir(credStreamTx, { depth: null, colors: true });
+	
+	try {
+	    await cord.ChainUtils.signAndSubmitTx(
+		credStreamCreationExtrinsic,
+		ondc,
+		{
+		    resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+		}
+	    );
+	    console.log("✅ Credential created!");
+	} catch (e: any) {
+	    console.log(e.errorCode, "-", e.message);
+	}
+	soldProducts.push(credContentStream);
     }
-  );
-  console.log(`\n📧 Hashed Stream Details`);
-  console.dir(credContentStream, { depth: null, colors: true });
 
-  bytes = json.encode(credContentStream);
-  encoded_hash = await hasher.digest(bytes);
-  const credStreamCid = CID.create(1, 0xb220, encoded_hash);
-
-  let credStreamTx = cord.Stream.fromContentStreamProperties(
-    credContentStream,
-    credStreamCid.toString()
-  );
-
-  let credStreamCreationExtrinsic = await credStreamTx.store();
-  console.log(`\n📧 Credential On-Chain Details`);
-  console.dir(credStreamTx, { depth: null, colors: true });
-
-  try {
-    await cord.ChainUtils.signAndSubmitTx(
-      credStreamCreationExtrinsic,
-      entityIdentity,
-      {
-        resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-      }
-    );
-    console.log("✅ Credential created!");
-  } catch (e: any) {
-    console.log(e.errorCode, "-", e.message);
-  }
-
+    /* 
   //  Step 7: Credential exchange via messaging
   console.log(`\n\n📩 Credential Exchange - Selective Disclosure (Verifier)`);
   console.log(`🔑 Verifier Address: ${verifierIdentity.address}`);
