@@ -143,7 +143,7 @@ async function main() {
   );
   console.log("✅ Identities created!");
 
-  // Step 2: Create a new Schema
+  // Step 2: Create a new Product Schema
   console.log(`\n\n✉️  Adding Product Schema \n`);
   let newSchemaContent = require('../res/ondc-prod-schema.json');
   let newSchemaName = newSchemaContent.name + ":" + UUID.generate();
@@ -166,11 +166,10 @@ async function main() {
 
   let schemaCreationExtrinsic = await newSchema.store(schemaCid.toString());
 
-  console.log(`📧 Schema Details `);
+  console.log(`📧 Product Schema Details `);
   console.dir(newSchema, { depth: null, colors: true });
-  console.log(`CID: `, schemaCid.toString());
-  console.log("\n⛓  Anchoring Schema to the chain...");
-  console.log(`🔑 Creator: ${ondc.address} `);
+  console.log("\n⛓  Anchoring Product Schema to the chain...");
+  console.log(`🔑 Creator: ${ondc.address} `); // Ideally this should be manufacturer
   console.log(`🔑 Controller: ${ondc.address} `);
 
   try {
@@ -186,9 +185,11 @@ async function main() {
     console.log(e.errorCode, "-", e.message);
   }
 
-  let tvbrands = [ "Sony", "Samsung", "LG", "mi", "MRL", "Onida", "Wu", "Panasonic" ];
-  let tvnames = [ "TV 32\"", "TV 40\"", "TV 43\"", "TV 46\"", "TV 55\"", "TV 65\"" ];
-  let models = [ "2021", "2022" ];
+  //let tvbrands = [ "Sony", "Samsung", "LG", "mi", "MRL", "Onida", "Wu", "Panasonic" ];
+  let tvbrands = [ "Sony", "Samsung", "LG", "mi" ];
+  //let tvnames = [ "TV 32\"", "TV 40\"", "TV 43\"", "TV 46\"", "TV 55\"", "TV 65\"" ];
+  let tvnames = [ "TV 32\"", "TV 40\"", "TV 55\"", "TV 65\"" ];
+  let models = [ "2022" ];
 
     let products: any = [];
     let productContents: any = [];
@@ -196,8 +197,8 @@ async function main() {
       await Promise.all(tvnames.map(async (n) => {
           await Promise.all(models.map(async (m) => {
 	      
-  // Step 2: Create a new Stream
-  console.log(`\n✉️  Adding new Stream`, "\n");
+  // Step 2: Create a new Product
+  console.log(`\n✉️  Adding new Product`, "\n");
   let content = {
       name: n,
       description: "Best Television in the World",
@@ -216,7 +217,7 @@ async function main() {
     //m === "2021" ? seller1.address : seller2.address
     ondc.address,
   );
-  console.log(`📧 Stream Details `);
+  console.log(`📧 Product Details `);
   console.dir(schemaStream, { depth: null, colors: true });
 
   let newStreamContent = cord.ContentStream.fromStreamContent(
@@ -224,7 +225,7 @@ async function main() {
     //m === "2021" ? seller1 : seller2
     ondc,
   );
-  console.log(`\n📧 Hashed Stream `);
+  console.log(`\n📧 Hashed Product Stream `);
   console.dir(newStreamContent, { depth: null, colors: true });
 
   bytes = json.encode(newStreamContent);
@@ -241,7 +242,7 @@ async function main() {
   console.log(`\n📧 Stream On-Chain Details`);
   console.dir(newStream, { depth: null, colors: true });
 
-  console.log("\n⛓  Anchoring Stream to the chain...");
+  console.log("\n⛓  Anchoring Product to the chain...");
   console.log(`🔑 Creator: ${seller1.address} `);
   console.log(`🔑 Controller: ${ondc.address} `);
 
@@ -253,107 +254,107 @@ async function main() {
         resolveOn: cord.ChainUtils.IS_IN_BLOCK,
       }
     );
-    console.log("✅ Stream created!");
+    console.log(`✅ Product (${newStream.id}) created! `);
   } catch (e: any) {
     console.log(e.errorCode, "-", e.message);
   }
-	      productContents.push(newStreamContent);
+	      productContents.push(content);
 	      products.push(newStream);
 	  }));
       }));
   }));
 
     
-  // Step 3: Create a new Credential and Link to the Stream
-  console.log(`\n\n✉️  Adding a new Credential Schema \n`);
-  let credSchema = require("../res/ondc-sell-schema.json");
-  credSchema.name = credSchema.name + ":" + UUID.generate();
+  // Step 3: Create a new Invoice Schema and Link to the Purchase Stream
+  console.log(`\n\n✉️  Adding a new Invoice Schema \n`);
+  let invoiceSchema = require("../res/ondc-sell-schema.json");
+  invoiceSchema.name = invoiceSchema.name + ":" + UUID.generate();
 
-  let credSchemaStream = cord.Schema.fromSchemaProperties(
-    credSchema,
+  let invoiceSchemaStream = cord.Schema.fromSchemaProperties(
+    invoiceSchema,
     ondc.address
   );
 
-  bytes = json.encode(credSchemaStream);
+  bytes = json.encode(invoiceSchemaStream);
   encoded_hash = await hasher.digest(bytes);
-  const credSchemaCid = CID.create(1, 0xb220, encoded_hash);
+  const invoiceSchemaCid = CID.create(1, 0xb220, encoded_hash);
 
-  let credSchemaCreationExtrinsic = await credSchemaStream.store(
-    credSchemaCid.toString()
+  let invoiceSchemaCreationExtrinsic = await invoiceSchemaStream.store(
+    invoiceSchemaCid.toString()
   );
-  console.log("\n⛓  Anchoring Credential Schema to the chain...");
+  console.log("\n⛓  Anchoring Invoice Schema to the chain...");
 
   try {
     await cord.ChainUtils.signAndSubmitTx(
-      credSchemaCreationExtrinsic,
+      invoiceSchemaCreationExtrinsic,
       ondc,
       {
         resolveOn: cord.ChainUtils.IS_IN_BLOCK,
       }
     );
-    console.log("✅ Schema created!");
+    console.log("✅ Invoice Schema created!");
   } catch (e: any) {
     console.log(e.errorCode, "-", e.message);
   }
 
     let soldProducts: any = [];
     for (let i = 0; i < 10; i++) {
-	let idx: number = between(0,90);
+	let idx: number = between(0,products.length);
 	let product = productContents[idx];
 	let prodStream = products[idx];
 
-	console.log(`\n✉️  Adding a new Credential`, "\n");
-	let credStream = {
-	    sku: product.content.contents.sku,
-	    price: product.content.contents.product,
+	console.log(`\n✉️  Creating new Purchase`, "\n");
+	let purchaseStream = {
+	    sku: product.sku,
+	    price: product.price,
 	    sellerDetails: seller1.address,
 	    buyer: idx % 2 ? buyer1.address : buyer2.address,
-	    invoice: UUID.generate()
+	    invoice: `${UUID.generate()}`
 	};
 
-	let credStreamContent = cord.Content.fromSchemaAndContent(
-	    credSchemaStream,
-	    credStream,
-	    seller1.address
+	let purchaseStreamContent = cord.Content.fromSchemaAndContent(
+	    invoiceSchemaStream,
+	    purchaseStream,
+	    ondc.address, //seller1.address
 	);
 
-	let credContentStream = cord.ContentStream.fromStreamContent(
-	    credStreamContent,
-	    seller1,
+	let purchaseContentStream = cord.ContentStream.fromStreamContent(
+	    purchaseStreamContent,
+	    ondc, //seller1,
 	    {
 		holder: idx % 2 ? buyer1.address : buyer2.address,
 		link: prodStream.id,
 	    }
 	);
-	console.log(`\n📧 Hashed Stream Details`);
-	console.dir(credContentStream, { depth: null, colors: true });
+	console.log(`\n📧 Hashed Purchase Details`);
+	console.dir(purchaseContentStream, { depth: null, colors: true });
 	
-	bytes = json.encode(credContentStream);
+	bytes = json.encode(purchaseContentStream);
 	encoded_hash = await hasher.digest(bytes);
-	const credStreamCid = CID.create(1, 0xb220, encoded_hash);
+	const purchaseStreamCid = CID.create(1, 0xb220, encoded_hash);
 	
-	let credStreamTx = cord.Stream.fromContentStreamProperties(
-	    credContentStream,
-	    credStreamCid.toString()
+	let purchaseStreamTx = cord.Stream.fromContentStreamProperties(
+	    purchaseContentStream,
+	    purchaseStreamCid.toString()
 	);
 
-	let credStreamCreationExtrinsic = await credStreamTx.store();
-	console.log(`\n📧 Credential On-Chain Details`);
-	console.dir(credStreamTx, { depth: null, colors: true });
+	let purchaseStreamCreationExtrinsic = await purchaseStreamTx.store();
+	console.log(`\n📧 Purchase On-Chain Details`);
+	console.dir(purchaseStreamTx, { depth: null, colors: true });
 	
 	try {
 	    await cord.ChainUtils.signAndSubmitTx(
-		credStreamCreationExtrinsic,
+		purchaseStreamCreationExtrinsic,
 		ondc,
 		{
 		    resolveOn: cord.ChainUtils.IS_IN_BLOCK,
 		}
 	    );
-	    console.log("✅ Credential created!");
+	    console.log("✅ Purchase completed!");
 	} catch (e: any) {
 	    console.log(e.errorCode, "-", e.message);
 	}
-	soldProducts.push(credContentStream);
+	soldProducts.push(purchaseContentStream);
     }
 
     /* 
