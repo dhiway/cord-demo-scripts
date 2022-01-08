@@ -8,9 +8,9 @@ import yargs from "yargs";
 
 const { DEMO_KEY_URI, DEMO_WSS_ADDR, DEMO_LOOP_CNT } = process.env;
 
-function sleep(ms: number) {
+function sleep(s: number) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+    setTimeout(resolve, s * 1000);
   });
 }
 

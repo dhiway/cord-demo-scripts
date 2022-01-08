@@ -4,11 +4,13 @@
   "repository": "https://github.com/dhiway/cord-scripts",
   "scripts": {
     "demo": "yarn ts-node src/demo.ts",
+    "ondc": "yarn ts-node src/ondc-demo.ts",
     "start": "yarn ts-node src/start.ts"
   },
   "dependencies": {
     "@cord.network/api": "0.5.2-3",
     "@multiformats/blake2": "^1.0.5",
+    "ipfs-http-client": "^55.0.0",
     "multiformats": "^9.4.7",
     "yargs": "^17.2.1"
   },
