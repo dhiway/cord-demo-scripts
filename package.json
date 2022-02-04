@@ -8,15 +8,20 @@
     "start": "yarn ts-node src/start.ts"
   },
   "dependencies": {
-    "@cord.network/api": "0.5.2-3",
+    "@cord.network/api": "^0.5.2-3",
     "@multiformats/blake2": "^1.0.5",
     "ipfs-http-client": "^55.0.0",
     "multiformats": "^9.4.7",
     "yargs": "^17.2.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.0",
     "@types/yargs": "^17.0.2",
+    "babelify": "^10.0.0",
+    "browserify": "^17.0.0",
+    "esmify": "^2.1.1",
     "ts-node": "^9.1.1",
+    "tsify": "^5.0.4",
     "typescript": "^4.2.2",
     "wait-for-enter": "^1.0.0"
   },
