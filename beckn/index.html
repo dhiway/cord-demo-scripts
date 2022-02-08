@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<title>Browserify hello world</title>
+</head>
+<body>
+<div id="container"></div>
+</body>
+</div>
+<script src="bpp.js"></script>
+<script>
+  addProductToCord('//seller//1', {name: "Product1"}).then(identity => {
+      document.getElementById('container').innerHTML = `Product Identity to be stored ${identity}`
+  })
+</script>
+</html>

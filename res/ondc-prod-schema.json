@@ -1,13 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "name": "Demo Product",
+    "name": "Beckn Item Schema",
     "properties": {
-        "name": {
+        "id": {
             "type": "string"
         },
-        "description": {
+        "parent_item_id": {
             "type": "string"
         },
+	"description": {
+	    "type": "string"
+	},
         "countryOfOrigin": {
             "type": "string"
         },
@@ -29,9 +32,30 @@
         "price": {
             "type": "string"
         },
-        "aggregateRating": {
-            "type": "string"
-        }
+	"category_id": {
+	    "type": "string"
+	},
+	"fulfillment_id": {
+	    "type": "string"
+	},
+	"location_id": {
+	    "type": "string"
+	},
+        "rating": {
+            "type": "number"
+        },
+	"rateable": {
+	    "type": "boolean"
+	},
+	"matched": {
+	    "type": "boolean"
+	},
+	"related": {
+	    "type": "boolean"
+	},
+	"recommended": {
+	    "type": "boolean"
+	}
     },
     "type": "object"
 }
