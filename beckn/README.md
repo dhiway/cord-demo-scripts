@@ -45,7 +45,7 @@ NOTE: this identity should be having the schema registered for delegation.
 
  * 2 is 'product', which should be an JSON Object with Beckn Item schema. Currently (ie, right now), Cord doesn't support objects inside of this, and hence one needs to have the flatted product object. As minimum as having a `{name}` field works for product registration for now.
 
-The return value of the method is a Promise(), which returns the product listing Identity, which should be saved in the inventory, so we can see it in BAP side when the listing happens.
+The return value of the method is a Promise(), which returns the product listing Identity and Block Hash where the transaction is anchored, which should be saved in the inventory, so we can see it in BAP side when the listing happens.
 
 
 ## BAP
@@ -55,7 +55,7 @@ The return value of the method is a Promise(), which returns the product listing
 
 * Add a badge when the above 'listing identity' is passed in the listing.
 
+Current code to fetch the details from the block. This block Identity is expected to come from catalog listing.
 
 ### Script to register an order
 
-<TODO>

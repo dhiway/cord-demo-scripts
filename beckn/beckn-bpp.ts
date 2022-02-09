@@ -156,8 +156,8 @@ export async function registerProducts(id: any, schema: any, product: any) {
 	return false;
     }
 
-    let store_name = '';
-    let price = 135000;
+    let store_name = ''; /* TODO: should come as Input */
+    let price = product?.price ? product.price : 0;
     
     let listStream = cord.Content.fromSchemaAndContent(
 	schema,
@@ -190,7 +190,7 @@ export async function registerProducts(id: any, schema: any, product: any) {
     )
 
     let listingCreationExtrinsic = await newListing.list()
-    
+    let blkhash = '';
     try {
 	let block = await cord.ChainUtils.signAndSubmitTx(
 	    listingCreationExtrinsic,
@@ -200,12 +200,13 @@ export async function registerProducts(id: any, schema: any, product: any) {
 	    }
 	)
 	console.log("Success", block, newListing, listingCreationExtrinsic);
+	blkhash = `${block.status.asInBlock}`;
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
-	return '';
+	return { id: '', block: undefined };
     }
 
-    return newListing.id;
+    return { id: newListing.id, block: blkhash } ;
 }
 
 
