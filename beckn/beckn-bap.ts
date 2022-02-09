@@ -123,7 +123,6 @@ export async function placeOrder(id: any, schema: any, product: any, listId: str
 	id.buyer!.address
     )
     console.log(`📧 Product Order Details `)
-    console.dir(orderStream, { depth: null, colors: true })
 
     let newOrderContent = cord.ContentStream.fromStreamContent(
 	orderStream,
@@ -132,9 +131,7 @@ export async function placeOrder(id: any, schema: any, product: any, listId: str
 	    link: listId,
 	}
     )
-    console.log(`\n📧 Hashed Order Stream `)
-    console.dir(newOrderContent, { depth: null, colors: true })
-    
+
     let bytes = json.encode(newOrderContent)
     let encoded_hash = await hasher.digest(bytes)
     const orderCid = CID.create(1, 0xb220, encoded_hash)
@@ -147,24 +144,22 @@ export async function placeOrder(id: any, schema: any, product: any, listId: str
     )
 
     let orderCreationExtrinsic = await newOrder.order()
-    
-    console.log(`\n📧 Order On-Chain Details`)
-    console.dir(newOrder, { depth: null, colors: true })
-    console.log('\n⛓  Anchoring Product Ordering Event to the chain...')
-    console.log(`🔑 Controller: ${id.buyer!.address} `)
-    
+        
     try {
-	await cord.ChainUtils.signAndSubmitTx(
+	let block =  await cord.ChainUtils.signAndSubmitTx(
 	    orderCreationExtrinsic,
 	    id.networkAuthor!,
 	    {
 		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
 	    }
 	)
+	
 	console.log(`✅ Order (${newOrder.id}) created! `)
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
     }
+
+    return true;
 }
 
 async function main(my_id: string, blockHash: string, listId: string) {
@@ -232,16 +227,29 @@ async function main(my_id: string, blockHash: string, listId: string) {
     console.log(listingId, storeId, price);
 
     // Step 4: Create an Order from the lists
-    await placeOrder(id, productSchema, product, listingId, storeId, price);
+    let block = await placeOrder(id, productSchema, product, listingId, storeId, price);
 
     /*
     // Step 4: Create an Rating from the lists
     let ratings = await giveRating(id, schema, orders);
     console.log(`✅ ${ratings.length} rating given! `)
     */
-    await waitForEnter('\n⏎ Press Enter to continue..')
+
+    return true;
 }
 
+exports.placeOrder = main
+
+// When browserified - we can't call myFunction() from the HTML, so we'll externalize myExtFunction()
+// On the server-side "window" is undef. so we hide it.
+if (typeof window !== 'undefined') {
+    window.placeOrderOnCord = function(my_id: string, blockHash: string, listId: string) {
+        return main(my_id, blockHash, listId);
+    }
+}
+
+/* TODO: If not required to be on the browser, then uncomment this section */
+/*
 main('//buyer//1', '0x00744854001d04d873a28a2a402608de768ffa79820bb83756ba849bf461938e', '0x4b1b959a616b4bf170b08a09a37f5f56d782b70ed2346719e7702dee8c387607')
   .then(() => console.log('\nBye! 👋 👋 👋 '))
   .finally(cord.disconnect)
@@ -251,3 +259,5 @@ process.on('SIGINT', async () => {
   cord.disconnect()
   process.exit(0)
 })
+
+*/
