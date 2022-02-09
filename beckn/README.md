@@ -59,3 +59,10 @@ Current code to fetch the details from the block. This block Identity is expecte
 
 ### Script to register an order
 
+
+```
+npx ts-node beckn/beckn-bap.ts
+```
+
+Notice that the script is designed to be called with arguments recieved from listingId, and blockHash (both available for BPP), along with buyer identifier (which doesn't need any pre-token loading or anything). This identity should remain same for the buyer across instances (Hence good to choose email or something for it).
+
