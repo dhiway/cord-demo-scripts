@@ -8,7 +8,7 @@
     "start": "yarn ts-node src/start.ts"
   },
   "dependencies": {
-    "@cord.network/api": "^0.5.2-3",
+    "@cord.network/api": "^0.5.2-5",
     "@multiformats/blake2": "^1.0.5",
     "ipfs-http-client": "^55.0.0",
     "multiformats": "^9.4.7",

@@ -1,5 +1,4 @@
 import * as cord from '@cord.network/api'
-import { Crypto, UUID } from '@cord.network/utils'
 import * as json from 'multiformats/codecs/json'
 import { blake2b256 as hasher } from '@multiformats/blake2/blake2b'
 import { CID } from 'multiformats/cid'
@@ -86,13 +85,6 @@ export async function waitForEnter(message?: string) {
   await waitForEnter()
 }
 
-const NUMBER_OF_ORDERS = 8
-const NUMBER_OF_RATING = 5
-
-function between(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min) + min);
-}
-
 export async function createIdentities(my_id: string) {
 
     // Step 1: Setup Org Identity
@@ -122,15 +114,12 @@ export async function createIdentities(my_id: string) {
 
 
 
-export async function placeOrder(id: any, schema: any, listId: string, storeId: string) {
-    let orders: any = []
-    let price = 135000
+export async function placeOrder(id: any, schema: any, product: any, listId: string, storeId: string, price: any) {
     console.log(`\n\n✉️  Listening to Product Orders \n`)
 
-    let inventory: any = {};
     let orderStream = cord.Content.fromSchemaAndContent(
 	schema,
-	inventory.product!.stream!.contents,
+	{name: "Hello"},
 	id.buyer!.address
     )
     console.log(`📧 Product Order Details `)
@@ -154,7 +143,7 @@ export async function placeOrder(id: any, schema: any, listId: string, storeId: 
 	newOrderContent,
 	orderCid.toString(),
 	storeId,
-	price
+	price ? price : 0,
     )
 
     let orderCreationExtrinsic = await newOrder.order()
@@ -176,112 +165,76 @@ export async function placeOrder(id: any, schema: any, listId: string, storeId: 
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
     }
-    return;
 }
 
-export async function giveRating(id: any, schema: any, orders: any) {
-    let ratings: any = [];
-    let price = 135000
-
-    console.log(`\n\n✉️  Listening to Ratings \n`)
-
-    let order: any = {};
-    let ratingStream = cord.Content.fromSchemaAndContent(
-	schema,
-	order.product!.stream!.contents,
-	id.buyer!.address
-    )
-    console.log(`📧 Product Order Details `)
-    console.dir(ratingStream, { depth: null, colors: true })
-    
-    let newRatingContent = cord.ContentStream.fromStreamContent(
-	ratingStream,
-	id.buyer!,
-	{
-	    link: order.order!.id,
-	}
-    )
-    console.log(`\n📧 Hashed Order Stream `)
-    console.dir(newRatingContent, { depth: null, colors: true })
-
-    let bytes = json.encode(newRatingContent)
-    let encoded_hash = await hasher.digest(bytes)
-    const ratingCid = CID.create(1, 0xb220, encoded_hash)
-    let rating = between(1,5);
-    let newRating = cord.Product.fromProductContentAnchor(
-	newRatingContent,
-	ratingCid.toString(),
-	order.listing!.store_id,
-	price,
-	rating
-    )
-
-    let ratingCreationExtrinsic = await newRating.order_rating()
-    
-    console.log(`\n📧 Order On-Chain Details`)
-    console.dir(newRating, { depth: null, colors: true })
-    console.log('\n⛓  Anchoring Product Ordering Event to the chain...')
-    console.log(`🔑 Controller: ${id.buyer!.address} `)
-    
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    ratingCreationExtrinsic,
-	    id.networkAuthor!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	console.log(`✅ Rating for (${newRating.id}) created! `)
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-    }
-
-    return;
-}
-
-
-async function main(my_id: string, blockHash: string) {
+async function main(my_id: string, blockHash: string, listId: string) {
     await cord.init({ address: 'wss://staging.cord.network' })
 
     /* Create Identities - Can have a separate registry for this */
     let id = await createIdentities(my_id);
     console.log('✅ Identities created!')
 
-
+    /* TODO: can we get this from cord? */
     const provider = new WsProvider('wss://staging.cord.network');
     const api = await ApiPromise.create({ provider});
 
-    //console.log("Query", api.query);
-    //console.log("Query", api);
     //let list = await api.query.product.products(listId);
     //console.log("List", listId, list);
     //const args = process.argv.slice(2);
 
     const signedBlock = await api.rpc.chain.getBlock(blockHash);
 
+    if (!signedBlock) {
+       console.log("product anchor not found");
+       return;
+    }
+
+    let prodSchemaContent = require('../res/ondc-prod-schema.json')
+
+    let productSchema = cord.Schema.fromSchemaProperties(
+	prodSchemaContent,
+	id.productOwner!.address
+    )
+
     let storeId: string = '';
     let listingId: string = '';
     let price: string = '';
-    signedBlock.block.extrinsics.forEach((ex, index) => {
-	const { isSigned, meta, method: { args, method, section } } = ex;
+    let product: any = {};
+    signedBlock.block.extrinsics.forEach(async (ex: any, index: number) => {
+	const { method: { args, method, section } } = ex;
 
 	if (method !== 'list' && section !== 'product') {
 	   return;
 	}
 
 	listingId = args[0].toString();
-	storeId = args[3].toString();
-	price = args[4].toString();
+
+	/* there can be more than 1 product.list events */
+	if (listingId === listId) {
+            /* This is matching now */
+	    storeId = args[3].toString();
+	    price = args[4].toString();
+	    let product = cord.Product.fromProductAnchor(
+		listId,
+		args[2].toString(), /* contentHash */
+		args[5].toString(), /* cid */
+		args[1].toString(), /* creator */
+		storeId,
+		productSchema.id?.replace('cord:schema:',''),
+		parseInt(price, 10),
+		args[7].toString(), /* link */
+		0
+	    )
+	}
     });
 
 
     console.log(listingId, storeId, price);
 
-	/*
     // Step 4: Create an Order from the lists
-    let orders = await placeOrder(id, schema, listings);
-    console.log(`✅ ${orders.length} orders placed! `)
+    await placeOrder(id, productSchema, product, listingId, storeId, price);
 
+    /*
     // Step 4: Create an Rating from the lists
     let ratings = await giveRating(id, schema, orders);
     console.log(`✅ ${ratings.length} rating given! `)
@@ -289,7 +242,7 @@ async function main(my_id: string, blockHash: string) {
     await waitForEnter('\n⏎ Press Enter to continue..')
 }
 
-main('//buyer//1', '0x00744854001d04d873a28a2a402608de768ffa79820bb83756ba849bf461938e')
+main('//buyer//1', '0x00744854001d04d873a28a2a402608de768ffa79820bb83756ba849bf461938e', '0x4b1b959a616b4bf170b08a09a37f5f56d782b70ed2346719e7702dee8c387607')
   .then(() => console.log('\nBye! 👋 👋 👋 '))
   .finally(cord.disconnect)
 
