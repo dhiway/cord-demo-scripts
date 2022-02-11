@@ -214,6 +214,12 @@ async function main(my_id: string, product: any) {
     await cord.init({ address: 'wss://staging.cord.network' })
 
     /* Create Identities - Can have a separate registry for this */
+    if (!my_id || my_id === '') {
+        my_id = '//seller//default';
+    }
+    if (!product?.name) {
+	product = { ...product, name: "Default Item"};
+    }
     let id = await createIdentities(my_id);
 
     let newProdSchemaContent = require('../res/ondc-prod-schema.json')
@@ -222,26 +228,6 @@ async function main(my_id: string, product: any) {
 	newProdSchemaContent,
 	id.productOwner!.address
     )
-
-    /*
-    let productSchemaDelegateExtrinsic = await newProductSchema.add_delegate(
-	id.seller!.address
-    )
-
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    productSchemaDelegateExtrinsic,
-	    id.productOwner!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	console.log('✅ Schema Delegation added: ${sellerOne.address}')
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-    }
-
-    */
 
     // Step 2: Setup a new Product
     let result = await registerProducts(id, newProductSchema, product);

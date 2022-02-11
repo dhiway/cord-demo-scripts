@@ -4,7 +4,7 @@ var esmify = require('esmify');
 
 browserify
 
-browserify()
+browserify({debug: true})
     .add('./beckn/beckn-bpp.ts', {
 	standalone: 'cord',
     }) // main entry of an application

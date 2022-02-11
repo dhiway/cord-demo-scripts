@@ -1,3 +1,4 @@
+import express from 'express';
 import * as cord from '@cord.network/api'
 import { Crypto, UUID } from '@cord.network/utils'
 import * as json from 'multiformats/codecs/json'
@@ -5,7 +6,6 @@ import { blake2b256 as hasher } from '@multiformats/blake2/blake2b'
 import { CID } from 'multiformats/cid'
 import type { KeyringPair } from '@polkadot/keyring/types'
 
-/* UTIL */
 const AUTH_SEED =
   '0x0000000000000000000000000000000000000000000000000000000000000000'
 const ENC_SEED =
@@ -89,9 +89,6 @@ function between(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-/* Helpers */
-
-
 export async function createIdentities(my_id: string) {
 
     // Step 1: Setup Org Identity
@@ -106,9 +103,116 @@ export async function createIdentities(my_id: string) {
     const seller = cord.Identity.buildFromURI(my_id, {
 	signingKeyPairType: 'sr25519',
     })
+
+    console.log(
+	`🔑 Network Author Address (${networkAuthor.signingKeyType}): ${networkAuthor.address}`
+    )
+    console.log(
+	`🔑 Product Controller Address (${productOwner.signingKeyType}): ${productOwner.address}`
+    )
+    console.log(
+	`🔑 Seller Address (${seller.signingKeyType}): ${seller.address}`
+    )
+
     return { networkAuthor, productOwner, seller }
 }
 
+
+export async function registerProducts(id: any, schema: any, seller_name: string, product: any) {
+    // Step 2: Setup a new Product
+    console.log(`\n✉️  Listening to new Product Additions`, '\n')
+    
+    let productStream = cord.Content.fromSchemaAndContent(
+	schema,
+	product,
+	id.productOwner!.address
+    )
+    
+    let newProductContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	id.productOwner!
+    )
+
+    let bytes = json.encode(newProductContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const streamCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newProduct = cord.Product.fromProductContentAnchor(
+	newProductContent,
+	streamCid.toString()
+    )
+
+    let productCreationExtrinsic = await newProduct.create()
+
+    try {
+	await cord.ChainUtils.signAndSubmitTx(
+	    productCreationExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	return {id: '', block: '', error: e.message};
+    }
+
+    let price = product?.price ? product.price : 0;
+    
+    let listStream = cord.Content.fromSchemaAndContent(
+	schema,
+	productStream!.contents,
+	id.seller!.address
+    )
+ 
+    let newListingContent = cord.ContentStream.fromStreamContent(
+	listStream,
+	id.seller!,
+	{
+	    link: newProduct!.id!,
+	}
+    )
+
+    bytes = json.encode(newListingContent)
+    encoded_hash = await hasher.digest(bytes)
+    const listCid = CID.create(1, 0xb220, encoded_hash)
+    const storeVal = {
+	store: seller_name,
+	seller: id.seller!.address,
+    }
+    const storeId = Crypto.hashObjectAsStr(storeVal)
+    
+    let newListing = cord.Product.fromProductContentAnchor(
+	newListingContent,
+	listCid.toString(),
+	storeId.toString(),
+	price
+    )
+
+    let listingCreationExtrinsic = await newListing.list()
+    let blkhash = '';
+    try {
+	let block = await cord.ChainUtils.signAndSubmitTx(
+	    listingCreationExtrinsic,
+	    id.networkAuthor!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	console.log("Success", block, newListing, listingCreationExtrinsic);
+	blkhash = `${block.status.asInBlock}`;
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	return { id: '', block: undefined };
+    }
+
+    return { id: newListing.id, block: blkhash } ;
+}
+
+export async function initializeCord() {
+    await cord.init({ address: 'wss://staging.cord.network' })
+
+}
 
 export async function registerSchema(id: any) {
     
@@ -149,29 +253,72 @@ export async function registerSchema(id: any) {
 	console.log('✅ Schema Delegation added: ${sellerOne.address}')
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
+	return false;
     }
+    return true;
 }
 
+let seller_ids: any[] = ['//seller//1'];
 
-async function main() {
-    await cord.init({ address: 'wss://staging.cord.network' })
-
+async function registerProduct1(my_id: string, seller: string, product: any) {
     /* Create Identities - Can have a separate registry for this */
-    let id = await createIdentities('//seller//default');
-    console.log('✅ Identities created!')
-    
-    // Step 2: Setup a new Product
-    await registerSchema(id);
+    if (!my_id || my_id === '') {
+        my_id = '//seller//default';
+    }
+    if (!product?.name) {
+	product = { ...product, name: "Default Item"};
+    }
+    let id = await createIdentities(my_id);
 
-    await waitForEnter('\n⏎ Press Enter to continue..')
+    let newProdSchemaContent = require('../res/ondc-prod-schema.json')
+
+    let newProductSchema = cord.Schema.fromSchemaProperties(
+	newProdSchemaContent,
+	id.productOwner!.address
+    )
+
+    if (!seller_ids.includes(my_id)) {
+        if (await registerSchema(id)) {
+            seller_ids.push(my_id);
+	}
+    }
+
+    // Step 2: Setup a new Product
+    return await registerProducts(id, newProductSchema, seller, product);
 }
 
-main()
-  .then(() => console.log('\nBye! 👋 👋 👋 '))
-  .finally(cord.disconnect)
 
-process.on('SIGINT', async () => {
-  console.log('\nBye! 👋 👋 👋 \n')
-  cord.disconnect()
-  process.exit(0)
-})
+export async function registerProduct(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    if (!data.identifier || data.identifier === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    }
+    if (!data.product || data.product === '') {
+	res.status(400).json({
+            error: 'product is a required field'
+        });
+        return;
+    }
+    
+    let id = data.identifier;
+    let product: any = JSON.parse(data.product);
+    let sellerName = data.seller_name;
+    if (!sellerName) {
+	sellerName = 'Default Seller';
+    }
+    let result = await registerProduct1(id, sellerName, product);
+
+    res.status(200).json({
+	product_list_id: result.id,
+	blockHash: result.block
+    });
+    return;
+}
