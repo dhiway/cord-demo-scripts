@@ -5,6 +5,7 @@ import * as json from 'multiformats/codecs/json'
 import { blake2b256 as hasher } from '@multiformats/blake2/blake2b'
 import { CID } from 'multiformats/cid'
 import type { KeyringPair } from '@polkadot/keyring/types'
+const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 const AUTH_SEED =
   '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -91,34 +92,19 @@ function between(min: number, max: number) {
 
 export async function createIdentities(my_id: string) {
 
-    // Step 1: Setup Org Identity
-    console.log(`\n🏛  Creating Identities\n`)
-    //3x4DHc1rxVAEqKWSx1DAAA8wZxLB4VhiRbMV997niBckUwSi
-    const networkAuthor = cord.Identity.buildFromURI('//Alice', {
-	signingKeyPairType: 'sr25519',
-    })
-    const productOwner = cord.Identity.buildFromURI('//Bob', {
-	signingKeyPairType: 'sr25519',
-    })
-    const seller = cord.Identity.buildFromURI(my_id, {
+    const user = cord.Identity.buildFromURI(my_id, {
 	signingKeyPairType: 'sr25519',
     })
 
     console.log(
-	`🔑 Network Author Address (${networkAuthor.signingKeyType}): ${networkAuthor.address}`
-    )
-    console.log(
-	`🔑 Product Controller Address (${productOwner.signingKeyType}): ${productOwner.address}`
-    )
-    console.log(
-	`🔑 Seller Address (${seller.signingKeyType}): ${seller.address}`
+	`🔑 User Address (${user.signingKeyType}): ${user.address}`
     )
 
-    return { networkAuthor, productOwner, seller }
+    return { networkAuthor, productOwner, user }
 }
 
 
-export async function registerProducts(id: any, schema: any, seller_name: string, product: any) {
+export async function registerProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any) {
     // Step 2: Setup a new Product
     console.log(`\n✉️  Listening to new Product Additions`, '\n')
     
@@ -157,17 +143,15 @@ export async function registerProducts(id: any, schema: any, seller_name: string
 	return {id: '', block: '', error: e.message};
     }
 
-    let price = product?.price ? product.price : 0;
-    
     let listStream = cord.Content.fromSchemaAndContent(
 	schema,
 	productStream!.contents,
-	id.seller!.address
+	id.user!.address
     )
  
     let newListingContent = cord.ContentStream.fromStreamContent(
 	listStream,
-	id.seller!,
+	id.user!,
 	{
 	    link: newProduct!.id!,
 	}
@@ -178,15 +162,17 @@ export async function registerProducts(id: any, schema: any, seller_name: string
     const listCid = CID.create(1, 0xb220, encoded_hash)
     const storeVal = {
 	store: seller_name,
-	seller: id.seller!.address,
+	seller: id.user!.address,
     }
     const storeId = Crypto.hashObjectAsStr(storeVal)
+    
+    let sellingprice = product?.price ? parseInt(product.price) : parseInt(price, 10);
     
     let newListing = cord.Product.fromProductContentAnchor(
 	newListingContent,
 	listCid.toString(),
 	storeId.toString(),
-	price
+	sellingprice
     )
 
     let listingCreationExtrinsic = await newListing.list()
@@ -209,37 +195,51 @@ export async function registerProducts(id: any, schema: any, seller_name: string
     return { id: newListing.id, block: blkhash } ;
 }
 
+let provider: any = null;
+let api: any = null;
+let seller_ids: any[] = ['//seller//1'];
+let prodSchemaContent = require('../res/ondc-prod-schema.json')
+let productSchema: any = undefined;
+let networkAuthor: any = undefined;
+let productOwner: any = undefined;
+
+
 export async function initializeCord() {
     await cord.init({ address: 'wss://staging.cord.network' })
 
-}
+    provider = new WsProvider('wss://staging.cord.network');
+    api = await ApiPromise.create({ provider});
 
-export async function registerSchema(id: any) {
-    
-    console.log(`\n\n✉️  Adding a new Product Schema \n`)
-    let newProdSchemaContent = require('../res/ondc-prod-schema.json')
-
-    let newProductSchema = cord.Schema.fromSchemaProperties(
-	newProdSchemaContent,
-	id.productOwner!.address
+    networkAuthor = cord.Identity.buildFromURI('//Alice', {
+	signingKeyPairType: 'sr25519',
+    })
+    productOwner = cord.Identity.buildFromURI('//Bob', {
+	signingKeyPairType: 'sr25519',
+    })
+    console.log(
+	`🔑 Network Author Address (${networkAuthor.signingKeyType}): ${networkAuthor.address}`
+    )
+    console.log(
+	`🔑 Product Controller Address (${productOwner.signingKeyType}): ${productOwner.address}`
     )
 
-    let bytes = json.encode(newProductSchema)
+    productSchema = cord.Schema.fromSchemaProperties(
+	prodSchemaContent,
+	productOwner!.address
+    )
+    let bytes = json.encode(productSchema)
     let encoded_hash = await hasher.digest(bytes)
     const schemaCid = CID.create(1, 0xb220, encoded_hash)
 
-    let productSchemaCreationExtrinsic = await newProductSchema.store(
+    await productSchema.store(
 	schemaCid.toString()
     )
-    console.log(`📧 Schema Details `)
-    console.dir(newProductSchema, { depth: null, colors: true })
-    console.log(`CID: `, schemaCid.toString())
-    console.log('\n⛓  Anchoring Schema to the chain...')
-    console.log(`🔑 Controller: ${id.productOwner!.address} `)
+}
 
+export async function registerSchema(id: any) {
     /* TODO: should be done during seller registration */
-    let productSchemaDelegateExtrinsic = await newProductSchema.add_delegate(
-	id.seller!.address
+    let productSchemaDelegateExtrinsic = await productSchema.add_delegate(
+	id.user!.address
     )
 
     try {
@@ -250,7 +250,7 @@ export async function registerSchema(id: any) {
 		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
 	    }
 	)
-	console.log('✅ Schema Delegation added: ${sellerOne.address}')
+	console.log('✅ Schema Delegation added: ${id.user!.address}')
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
 	return false;
@@ -258,9 +258,7 @@ export async function registerSchema(id: any) {
     return true;
 }
 
-let seller_ids: any[] = ['//seller//1'];
-
-async function registerProduct1(my_id: string, seller: string, product: any) {
+async function registerProduct1(my_id: string, seller: string, product: any, price: any) {
     /* Create Identities - Can have a separate registry for this */
     if (!my_id || my_id === '') {
         my_id = '//seller//default';
@@ -270,13 +268,6 @@ async function registerProduct1(my_id: string, seller: string, product: any) {
     }
     let id = await createIdentities(my_id);
 
-    let newProdSchemaContent = require('../res/ondc-prod-schema.json')
-
-    let newProductSchema = cord.Schema.fromSchemaProperties(
-	newProdSchemaContent,
-	id.productOwner!.address
-    )
-
     if (!seller_ids.includes(my_id)) {
         if (await registerSchema(id)) {
             seller_ids.push(my_id);
@@ -284,7 +275,105 @@ async function registerProduct1(my_id: string, seller: string, product: any) {
     }
 
     // Step 2: Setup a new Product
-    return await registerProducts(id, newProductSchema, seller, product);
+    return await registerProductOnCord(id, productSchema, seller, product, price);
+}
+
+
+export async function placeOrderOnCord(id: any, schema: any, product: any, listId: string, storeId: string, price: any) {
+    let orderStream = cord.Content.fromSchemaAndContent(
+	schema,
+	{name: "Hello"},
+	id.user!.address
+    )
+    let newOrderContent = cord.ContentStream.fromStreamContent(
+	orderStream,
+	id.user!,
+	{
+	    link: listId,
+	}
+    )
+
+    let bytes = json.encode(newOrderContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const orderCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newOrder = cord.Product.fromProductContentAnchor(
+	newOrderContent,
+	orderCid.toString(),
+	storeId,
+	price ? price : 0,
+    )
+
+    let orderCreationExtrinsic = await newOrder.order()
+
+    let blkhash: any = '';
+    try {
+	let block =  await cord.ChainUtils.signAndSubmitTx(
+	    orderCreationExtrinsic,
+	    id.networkAuthor!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	
+	console.log(`✅ Order (${newOrder.id}) created! `)
+	blkhash = `${block.status.asInBlock}`;
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+    }
+
+    return blkhash;
+}
+
+async function placeOrder1(my_id: string, listId: string, blockHash: string, price: any) {
+    /* Create Identities - Can have a separate registry for this */
+    let id = await createIdentities(my_id);
+
+    let signedBlock: any = undefined;
+    try {
+     signedBlock = await api.rpc.chain.getBlock(blockHash);
+    } catch(err) {
+	console.log("error to place order", err, blockHash);
+    }
+    if (!signedBlock) {
+	return {error: 'block Hash not valid'}
+    }
+
+    let storeId: string = '';
+    let listingId: string = '';
+    let product: any = {};
+    signedBlock.block.extrinsics.forEach(async (ex: any, index: number) => {
+	const { method: { args, method, section } } = ex;
+
+	if (method !== 'list' && section !== 'product') {
+	   return;
+	}
+
+	listingId = args[0].toString();
+
+	/* there can be more than 1 product.list events */
+	if (listingId === listId) {
+            /* This is matching now */
+	    storeId = args[3].toString();
+	    let item_price = args[4].toString();
+	    let product = cord.Product.fromProductAnchor(
+		listId,
+		args[2].toString(), /* contentHash */
+		args[5].toString(), /* cid */
+		args[1].toString(), /* creator */
+		storeId,
+		productSchema.id?.replace('cord:schema:',''),
+		parseInt(item_price, 10),
+		args[7].toString(), /* link */
+		0
+	    )
+	}
+    });
+
+    // Step 4: Create an Order from the lists
+    let block = await placeOrderOnCord(id, productSchema, product, listingId, storeId, price);
+
+    return {block: block}
 }
 
 
@@ -314,7 +403,11 @@ export async function registerProduct(
     if (!sellerName) {
 	sellerName = 'Default Seller';
     }
-    let result = await registerProduct1(id, sellerName, product);
+    let price = data.selling_price;
+    if (!price) {
+	price = 0;
+    }
+    let result = await registerProduct1(id, sellerName, product, price);
 
     res.status(200).json({
 	product_list_id: result.id,
@@ -322,3 +415,69 @@ export async function registerProduct(
     });
     return;
 }
+
+
+export async function placeOrder(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    if (!data.identifier || data.identifier === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    }
+    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price);
+    if (result.error) {
+	res.status(400).json(result);
+        return;
+    }
+    res.status(200).json(result);
+    return;
+}
+
+export async function getBlockDetails(
+    req: express.Request,
+    res: express.Response
+) {
+    let blockHash = req.params.hash;
+    if (!blockHash) {
+       res.status(400).json({ error: "blockHash is a required field"});
+       return;
+    }
+    if (blockHash.length < 16) {
+	blockHash = await api.rpc.chain.getBlockHash(blockHash);
+	if (!blockHash) {
+	    res.status(404).json({ error: "Failed to get blockHash from number"});
+	    return;
+	}
+    }
+    const signedBlock = await api.rpc.chain.getBlock(blockHash);
+    if (!signedBlock) {
+       res.status(404).json({ error: "block Hash not found"});
+       return;
+    }
+
+    let extrinsics: any = [];
+    signedBlock.block.extrinsics.forEach((ex: any, index: number) => {
+	const { method: { args, method, section } } = ex;
+
+	extrinsics.push({
+	   index,
+	   section,
+	   method,
+	   args: args.map((a) => a.toString())
+	})
+    });
+
+    const events = await api.query.system.events.at(signedBlock.block.header.hash);
+    res.status(200).json({
+	extrinsics,
+	events,
+    });
+    return;
+}
+

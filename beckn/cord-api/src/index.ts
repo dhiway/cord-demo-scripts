@@ -4,7 +4,7 @@ const os = require('os');
 import express from 'express';
 import http from 'http';
 
-import { initializeCord, registerProduct } from './cord';
+import { initializeCord, registerProduct, getBlockDetails, placeOrder } from './cord';
 
 const {
     PORT,
@@ -13,9 +13,20 @@ const {
 const app = express();
 let router = express.Router({ mergeParams: true });
 
-
 router.post('/register-product', async (req, res) => {
     return await registerProduct(req, res);
+});
+
+router.post('/add-item', async (req, res) => {
+    return await registerProduct(req, res);
+});
+
+router.post('/confirm-order', async (req, res) => {
+    return await placeOrder(req, res);
+});
+
+router.get('/block/:hash', async (req, res) => {
+    return await getBlockDetails(req, res);
 });
 
 app.use(express.json());
