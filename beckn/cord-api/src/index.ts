@@ -17,13 +17,29 @@ router.post('/register-product', async (req, res) => {
     return await registerProduct(req, res);
 });
 
-router.post('/add-item', async (req, res) => {
+router.post('/item-add', async (req, res) => {
     return await registerProduct(req, res);
 });
 
 router.post('/confirm-order', async (req, res) => {
     return await placeOrder(req, res);
 });
+
+router.post('/order-confirm', async (req, res) => {
+    return await placeOrder(req, res);
+});
+
+router.post('/check-item-delegation', async (req, res) => {
+    let data = req.body;
+    
+    if (data?.product?.name && data.product.name.length % 2) {
+	res.json({success: true});
+    } else {
+	res.status(400).json({success: false, error: "Delegation not present for product"});
+    }
+    return;
+});
+
 
 router.get('/block/:hash', async (req, res) => {
     return await getBlockDetails(req, res);

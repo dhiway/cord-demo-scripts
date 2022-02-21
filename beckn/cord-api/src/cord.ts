@@ -199,10 +199,10 @@ let provider: any = null;
 let api: any = null;
 let seller_ids: any[] = ['//seller//1'];
 let prodSchemaContent = require('../res/ondc-prod-schema.json')
-let productSchema: any = undefined;
 let networkAuthor: any = undefined;
 let productOwner: any = undefined;
-
+let schemas: any[] = [];
+let productSchema: any = null;
 
 export async function initializeCord() {
     await cord.init({ address: 'wss://staging.cord.network' })
@@ -231,14 +231,61 @@ export async function initializeCord() {
     let encoded_hash = await hasher.digest(bytes)
     const schemaCid = CID.create(1, 0xb220, encoded_hash)
 
-    await productSchema.store(
+    let pSchemaExtrinsic = await productSchema.store(
 	schemaCid.toString()
     )
+
+    try {
+	await cord.ChainUtils.signAndSubmitTx(
+	    pSchemaExtrinsic,
+	    productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	console.log('✅ Schema added: ${productSchema.id}')
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+    }    
 }
 
-export async function registerSchema(id: any) {
+export async function registerSchema(id: any, name: string) {
     /* TODO: should be done during seller registration */
-    let productSchemaDelegateExtrinsic = await productSchema.add_delegate(
+    let schContent = {...prodSchemaContent};
+    schContent.name = `Item: ${name}`;
+    let schm = cord.Schema.fromSchemaProperties(
+	schContent,
+	productOwner!.address
+    )
+    let bytes = json.encode(schm)
+    let encoded_hash = await hasher.digest(bytes)
+    const schemaCid = CID.create(1, 0xb220, encoded_hash)
+
+    let pSchemaExtrinsic = await schm.store(
+	schemaCid.toString()
+    )
+
+    try {
+	await cord.ChainUtils.signAndSubmitTx(
+	    pSchemaExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	console.log('✅ Schema added: ${schm.id}')
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	return { success: false, schema: undefined }
+    }
+    console.dir(schm, { depth: null, colors: true })    
+    return { success: true, schema: schm };
+}
+
+export async function registerSchemaDelegate(id: any, name: string, schema: any) {
+    /* TODO: should be done during seller registration */
+
+    let productSchemaDelegateExtrinsic = await schema.add_delegate(
 	id.user!.address
     )
 
@@ -253,12 +300,13 @@ export async function registerSchema(id: any) {
 	console.log('✅ Schema Delegation added: ${id.user!.address}')
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
-	return false;
+	return { success: false, schema: undefined }
     }
-    return true;
+    console.dir(schema, { depth: null, colors: true })    
+    return { success: true, schema: schema };
 }
 
-async function registerProduct1(my_id: string, seller: string, product: any, price: any) {
+async function registerProduct1(my_id: string, schema: any, seller: string, product: any, price: any) {
     /* Create Identities - Can have a separate registry for this */
     if (!my_id || my_id === '') {
         my_id = '//seller//default';
@@ -268,14 +316,8 @@ async function registerProduct1(my_id: string, seller: string, product: any, pri
     }
     let id = await createIdentities(my_id);
 
-    if (!seller_ids.includes(my_id)) {
-        if (await registerSchema(id)) {
-            seller_ids.push(my_id);
-	}
-    }
-
     // Step 2: Setup a new Product
-    return await registerProductOnCord(id, productSchema, seller, product, price);
+    return await registerProductOnCord(id, schema, seller, product, price);
 }
 
 
@@ -331,7 +373,7 @@ async function placeOrder1(my_id: string, listId: string, blockHash: string, pri
 
     let signedBlock: any = undefined;
     try {
-     signedBlock = await api.rpc.chain.getBlock(blockHash);
+	signedBlock = await api.rpc.chain.getBlock(blockHash);
     } catch(err) {
 	console.log("error to place order", err, blockHash);
     }
@@ -390,7 +432,7 @@ export async function registerProduct(
         });
         return;
     }
-    if (!data.product || data.product === '') {
+    if (!data.product || data.product === '' || data.product === {}) {
 	res.status(400).json({
             error: 'product is a required field'
         });
@@ -398,7 +440,7 @@ export async function registerProduct(
     }
     
     let id = data.identifier;
-    let product: any = JSON.parse(data.product);
+    let product: any = data.product;
     let sellerName = data.seller_name;
     if (!sellerName) {
 	sellerName = 'Default Seller';
@@ -407,12 +449,34 @@ export async function registerProduct(
     if (!price) {
 	price = 0;
     }
-    let result = await registerProduct1(id, sellerName, product, price);
 
-    res.status(200).json({
-	product_list_id: result.id,
-	blockHash: result.block
-    });
+    /* get the schema registered */
+    let fail = true;
+    if (product.name && product.name.length % 2) {
+	let schma = await registerSchema(id, product.name);
+	if (schma.success) {
+	    let schmaDelegate = await registerSchemaDelegate(id,
+							     product.name,
+							     schma.schema);
+	    if (schmaDelegate.success) {
+		let result = await registerProduct1(id,
+						    schmaDelegate.schema,
+						    sellerName,
+						    product,
+						    price);
+		fail = false;
+		res.status(200).json({
+		    product_list_id: result.id,
+		    blockHash: result.block
+		});
+	    }
+	}
+    }
+
+    if (fail) {
+	res.status(400).json({error: "item.catalog addition confirmation failed"});
+    }
+    
     return;
 }
 
@@ -481,3 +545,25 @@ export async function getBlockDetails(
     return;
 }
 
+
+export async function checkDelegation(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    if (!data.identifier || data.identifier === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    }
+    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price);
+    if (result.error) {
+	res.status(400).json(result);
+        return;
+    }
+    res.status(200).json(result);
+    return;
+}
