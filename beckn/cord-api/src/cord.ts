@@ -452,31 +452,31 @@ export async function registerProduct(
 
     /* get the schema registered */
     let fail = true;
-    if (product.name && product.name.length % 2) {
-	let schma = await registerSchema(id, product.name);
-	if (schma.success) {
-	    let schmaDelegate = await registerSchemaDelegate(id,
-							     product.name,
-							     schma.schema);
-	    if (schmaDelegate.success) {
-		let result = await registerProduct1(id,
-						    schmaDelegate.schema,
-						    sellerName,
-						    product,
-						    price);
-		fail = false;
-		res.status(200).json({
-		    product_list_id: result.id,
-		    blockHash: result.block
-		});
-	    }
+    let schma = await registerSchema(id, product.name);
+    if (schma.success) {
+	if (product.name.length % 2) {
+	    schma = await registerSchemaDelegate(id,
+						 product.name,
+						 schma.schema);
+	}
+	let result = await registerProduct1(id,
+					    schma.schema,
+					    sellerName,
+					    product,
+					    price);
+	if (result.id !== '') {
+	    fail = false;
+	    res.status(200).json({
+		product_list_id: result.id,
+		blockHash: result.block
+	    });
 	}
     }
 
     if (fail) {
 	res.status(400).json({error: "item.catalog addition confirmation failed"});
     }
-    
+
     return;
 }
 
