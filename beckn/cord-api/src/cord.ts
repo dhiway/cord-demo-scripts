@@ -255,7 +255,7 @@ export async function registerSchema(id: any, name: string) {
     schContent.name = `Item: ${name}`;
     let schm = cord.Schema.fromSchemaProperties(
 	schContent,
-	productOwner!.address
+	id.productOwner!.address
     )
     let bytes = json.encode(schm)
     let encoded_hash = await hasher.digest(bytes)
@@ -306,16 +306,7 @@ export async function registerSchemaDelegate(id: any, name: string, schema: any)
     return { success: true, schema: schema };
 }
 
-async function registerProduct1(my_id: string, schema: any, seller: string, product: any, price: any) {
-    /* Create Identities - Can have a separate registry for this */
-    if (!my_id || my_id === '') {
-        my_id = '//seller//default';
-    }
-    if (!product?.name) {
-	product = { ...product, name: "Default Item"};
-    }
-    let id = await createIdentities(my_id);
-
+async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any) {
     // Step 2: Setup a new Product
     return await registerProductOnCord(id, schema, seller, product, price);
 }
@@ -439,7 +430,7 @@ export async function registerProduct(
         return;
     }
     
-    let id = data.identifier;
+    let my_id = data.identifier;
     let product: any = data.product;
     let sellerName = data.seller_name;
     if (!sellerName) {
@@ -449,6 +440,15 @@ export async function registerProduct(
     if (!price) {
 	price = 0;
     }
+    /* Create Identities - Can have a separate registry for this */
+    if (!my_id || my_id === '') {
+        my_id = '//seller//default';
+    }
+    if (!product?.name) {
+	product = { ...product, name: "Default Item"};
+    }
+    let id = await createIdentities(my_id);
+
 
     /* get the schema registered */
     let fail = true;
