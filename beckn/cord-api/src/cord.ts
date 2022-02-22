@@ -104,7 +104,7 @@ export async function createIdentities(my_id: string) {
 }
 
 
-export async function registerProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any) {
+export async function registerProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any, qty: any) {
     // Step 2: Setup a new Product
     console.log(`\n✉️  Listening to new Product Additions`, '\n')
     
@@ -125,7 +125,11 @@ export async function registerProductOnCord(id: any, schema: any, seller_name: s
 
     let newProduct = cord.Product.fromProductContentAnchor(
 	newProductContent,
-	streamCid.toString()
+	streamCid.toString(),
+	undefined, /*storeid */
+	undefined, /* price */
+	undefined, /* rating */
+	qty
     )
 
     let productCreationExtrinsic = await newProduct.create()
@@ -205,9 +209,9 @@ let schemas: any[] = [];
 let productSchema: any = null;
 
 export async function initializeCord() {
-    await cord.init({ address: 'wss://staging.cord.network' })
+    await cord.init({ address: 'ws://localhost:9944' })
 
-    provider = new WsProvider('wss://staging.cord.network');
+    provider = new WsProvider('ws://localhost:9944');
     api = await ApiPromise.create({ provider});
 
     networkAuthor = cord.Identity.buildFromURI('//Alice', {
@@ -249,6 +253,25 @@ export async function initializeCord() {
     }    
 }
 
+export async function buildSchema(id: any, name: string) {
+    /* TODO: should be done during seller registration */
+    let schContent = {...prodSchemaContent};
+    schContent.name = `Item: ${name}`;
+    let schm = cord.Schema.fromSchemaProperties(
+	schContent,
+	id.productOwner!.address
+    )
+    let bytes = json.encode(schm)
+    let encoded_hash = await hasher.digest(bytes)
+    const schemaCid = CID.create(1, 0xb220, encoded_hash)
+
+    let pSchemaExtrinsic = await schm.store(
+	schemaCid.toString()
+    )
+
+    return { success: true, schema: schm };
+}
+
 export async function registerSchema(id: any, name: string) {
     /* TODO: should be done during seller registration */
     let schContent = {...prodSchemaContent};
@@ -282,11 +305,11 @@ export async function registerSchema(id: any, name: string) {
     return { success: true, schema: schm };
 }
 
-export async function registerSchemaDelegate(id: any, name: string, schema: any) {
+export async function registerSchemaDelegate(id: any, name: string, schema: any, quantity: number) {
     /* TODO: should be done during seller registration */
 
     let productSchemaDelegateExtrinsic = await schema.add_delegate(
-	id.user!.address
+	id.user!.address, quantity
     )
 
     try {
@@ -306,13 +329,13 @@ export async function registerSchemaDelegate(id: any, name: string, schema: any)
     return { success: true, schema: schema };
 }
 
-async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any) {
+async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any, qty: any) {
     // Step 2: Setup a new Product
-    return await registerProductOnCord(id, schema, seller, product, price);
+    return await registerProductOnCord(id, schema, seller, product, price, qty);
 }
 
 
-export async function placeOrderOnCord(id: any, schema: any, product: any, listId: string, storeId: string, price: any) {
+export async function placeOrderOnCord(id: any, schema: any, product: any, listId: string, storeId: string, price: any, quantity: number) {
     let orderStream = cord.Content.fromSchemaAndContent(
 	schema,
 	{name: "Hello"},
@@ -335,6 +358,8 @@ export async function placeOrderOnCord(id: any, schema: any, product: any, listI
 	orderCid.toString(),
 	storeId,
 	price ? price : 0,
+	undefined, /* rating */
+	quantity
     )
 
     let orderCreationExtrinsic = await newOrder.order()
@@ -358,7 +383,7 @@ export async function placeOrderOnCord(id: any, schema: any, product: any, listI
     return blkhash;
 }
 
-async function placeOrder1(my_id: string, listId: string, blockHash: string, price: any) {
+async function placeOrder1(my_id: string, listId: string, blockHash: string, price: any, quantity: number) {
     /* Create Identities - Can have a separate registry for this */
     let id = await createIdentities(my_id);
 
@@ -404,7 +429,7 @@ async function placeOrder1(my_id: string, listId: string, blockHash: string, pri
     });
 
     // Step 4: Create an Order from the lists
-    let block = await placeOrderOnCord(id, productSchema, product, listingId, storeId, price);
+    let block = await placeOrderOnCord(id, productSchema, product, listingId, storeId, price, quantity);
 
     return {block: block}
 }
@@ -438,7 +463,11 @@ export async function registerProduct(
     }
     let price = data.selling_price;
     if (!price) {
-	price = 0;
+	price = 100;
+    }
+    let qty = data.quantity ? parseInt(data.quantity, 10): 500;
+    if (!qty) {
+	qty = 500;
     }
     /* Create Identities - Can have a separate registry for this */
     if (!my_id || my_id === '') {
@@ -449,8 +478,8 @@ export async function registerProduct(
     }
     let id = await createIdentities(my_id);
 
-
     /* get the schema registered */
+    /*
     let fail = true;
     let schma = await registerSchema(id, product.name);
     if (schma.success) {
@@ -459,22 +488,20 @@ export async function registerProduct(
 						 product.name,
 						 schma.schema);
 	}
-	let result = await registerProduct1(id,
-					    schma.schema,
-					    sellerName,
-					    product,
-					    price);
-	if (result.id !== '') {
-	    fail = false;
-	    res.status(200).json({
-		product_list_id: result.id,
-		blockHash: result.block
-	    });
-	}
-    }
-
-    if (fail) {
-	res.status(400).json({error: "item.catalog addition confirmation failed"});
+    */
+    let schma = await buildSchema(id, product.name);
+    let result = await registerProduct1(id,
+					schma.schema,
+					sellerName,
+					product,
+					price, qty);
+    if (result.id !== '') {
+	res.status(200).json({
+	    product_list_id: result.id,
+	    blockHash: result.block
+	});
+    } else {
+	res.status(400).json({success: false, error: "item.catalog addition confirmation failed"});
     }
 
     return;
@@ -494,7 +521,9 @@ export async function placeOrder(
         });
         return;
     }
-    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price);
+    
+    let qty = data.quantity ? parseInt(data.quantity, 10): 1;
+    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price, qty);
     if (result.error) {
 	res.status(400).json(result);
         return;
@@ -559,7 +588,7 @@ export async function checkDelegation(
         });
         return;
     }
-    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price);
+    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price, 1);
     if (result.error) {
 	res.status(400).json(result);
         return;

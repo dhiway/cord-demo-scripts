@@ -21,6 +21,10 @@ router.post('/item-add', async (req, res) => {
     return await registerProduct(req, res);
 });
 
+//router.post('/delegate-schema', async (req, res) => {
+//    return await delegateSchema(req, res);
+//});
+
 router.post('/confirm-order', async (req, res) => {
     return await placeOrder(req, res);
 });
@@ -32,7 +36,7 @@ router.post('/order-confirm', async (req, res) => {
 router.post('/check-item-delegation', async (req, res) => {
     let data = req.body;
     
-    if (data?.product?.name && data.product.name.length % 2) {
+    if (data?.product?.name && ['Grade A Shimla Apple'].includes(data.product.name)) {
 	res.json({success: true});
     } else {
 	res.status(400).json({success: false, error: "Delegation not present for product"});
