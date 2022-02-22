@@ -104,6 +104,51 @@ export async function createIdentities(my_id: string) {
 }
 
 
+export async function createProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any, qty: any) {
+    // Step 2: Setup a new Product
+    console.log(`\n✉️  Listening to new Product Additions`, '\n')
+    
+    let productStream = cord.Content.fromSchemaAndContent(
+	schema,
+	product,
+	id.productOwner!.address
+    )
+    
+    let newProductContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	id.productOwner!
+    )
+
+    let bytes = json.encode(newProductContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const streamCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newProduct = cord.Product.fromProductContentAnchor(
+	newProductContent,
+	streamCid.toString(),
+	undefined, /*storeid */
+	undefined, /* price */
+	undefined, /* rating */
+	10000,
+    )
+
+    let productCreationExtrinsic = await newProduct.create()
+
+    try {
+	await cord.ChainUtils.signAndSubmitTx(
+	    productCreationExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	return {id: '', block: '', error: e.message};
+    }
+    return { id: newProduct.id };
+}
+
 export async function registerProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any, qty: any) {
     // Step 2: Setup a new Product
     console.log(`\n✉️  Listening to new Product Additions`, '\n')
@@ -129,11 +174,12 @@ export async function registerProductOnCord(id: any, schema: any, seller_name: s
 	undefined, /*storeid */
 	undefined, /* price */
 	undefined, /* rating */
-	qty
+	10000,
     )
 
-    let productCreationExtrinsic = await newProduct.create()
+    //let productCreationExtrinsic = await newProduct.create()
 
+    /*
     try {
 	await cord.ChainUtils.signAndSubmitTx(
 	    productCreationExtrinsic,
@@ -146,18 +192,22 @@ export async function registerProductOnCord(id: any, schema: any, seller_name: s
 	console.log(e.errorCode, '-', e.message)
 	return {id: '', block: '', error: e.message};
     }
-
+    */
     let listStream = cord.Content.fromSchemaAndContent(
 	schema,
 	productStream!.contents,
 	id.user!.address
     )
- 
+
+    let prodId = gproducts[product.name];
+    if (!prodId) {
+        prodId = newProduct!.id;
+    }
     let newListingContent = cord.ContentStream.fromStreamContent(
 	listStream,
 	id.user!,
 	{
-	    link: newProduct!.id!,
+	    link: prodId,
 	}
     )
 
@@ -170,13 +220,15 @@ export async function registerProductOnCord(id: any, schema: any, seller_name: s
     }
     const storeId = Crypto.hashObjectAsStr(storeVal)
     
-    let sellingprice = product?.price ? parseInt(product.price) : parseInt(price, 10);
+    let sellingprice = price ? parseInt(price, 10) : parseInt(product.price, 10)
     
     let newListing = cord.Product.fromProductContentAnchor(
 	newListingContent,
 	listCid.toString(),
 	storeId.toString(),
-	sellingprice
+	sellingprice,
+	undefined,
+	qty
     )
 
     let listingCreationExtrinsic = await newListing.list()
@@ -189,13 +241,14 @@ export async function registerProductOnCord(id: any, schema: any, seller_name: s
 		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
 	    }
 	)
-	console.log("Success", block, newListing, listingCreationExtrinsic);
+	console.log("Success", block, newProduct, newListing, listingCreationExtrinsic);
 	blkhash = `${block.status.asInBlock}`;
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
 	return { id: '', block: undefined };
     }
 
+    console.log("Success Listing", newProduct, newListing);
     return { id: newListing.id, block: blkhash } ;
 }
 
@@ -207,6 +260,7 @@ let networkAuthor: any = undefined;
 let productOwner: any = undefined;
 let schemas: any[] = [];
 let productSchema: any = null;
+let gproducts: any = {};
 
 export async function initializeCord() {
     await cord.init({ address: 'ws://localhost:9944' })
@@ -299,7 +353,7 @@ export async function registerSchema(id: any, name: string) {
 	console.log('✅ Schema added: ${schm.id}')
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
-	return { success: false, schema: undefined }
+	return { success: false, schema: schm }
     }
     console.dir(schm, { depth: null, colors: true })    
     return { success: true, schema: schm };
@@ -323,14 +377,21 @@ export async function registerSchemaDelegate(id: any, name: string, schema: any,
 	console.log('✅ Schema Delegation added: ${id.user!.address}')
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
-	return { success: false, schema: undefined }
+	return { success: false, schema: schema }
     }
     console.dir(schema, { depth: null, colors: true })    
     return { success: true, schema: schema };
 }
 
-async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any, qty: any) {
+async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any, qty: any, full: boolean) {
     // Step 2: Setup a new Product
+    let resp: any = null;
+    if (full) {
+	resp = await createProductOnCord(id, schema, seller, product, price, qty);
+	if (resp && resp.id !== '') {
+	    gproducts[product.name] = resp.id;
+	}
+    }
     return await registerProductOnCord(id, schema, seller, product, price, qty);
 }
 
@@ -469,6 +530,12 @@ export async function registerProduct(
     if (!qty) {
 	qty = 500;
     }
+    /* TODO: this should be checked from delegation */
+    if (qty > 500) {
+	res.status(400).json({success: false, error: "quantity more than delegated"});	
+	return;
+    }
+    let full_cycle = data.full_cycle ? true : false;
     /* Create Identities - Can have a separate registry for this */
     if (!my_id || my_id === '') {
         my_id = '//seller//default';
@@ -479,22 +546,23 @@ export async function registerProduct(
     let id = await createIdentities(my_id);
 
     /* get the schema registered */
-    /*
-    let fail = true;
-    let schma = await registerSchema(id, product.name);
-    if (schma.success) {
-	if (product.name.length % 2) {
-	    schma = await registerSchemaDelegate(id,
-						 product.name,
-						 schma.schema);
-	}
-    */
-    let schma = await buildSchema(id, product.name);
+    let schma: any = null;
+    if (full_cycle) {
+	let fail = true;
+	schma = await registerSchema(id, product.name);
+	if (schma.success) {
+		schma = await registerSchemaDelegate(id,
+						     product.name,
+						     schma.schema, 500);
+	} 
+    } else {
+	schma = await buildSchema(id, product.name);
+    }
     let result = await registerProduct1(id,
 					schma.schema,
 					sellerName,
 					product,
-					price, qty);
+					price, qty, full_cycle);
     if (result.id !== '') {
 	res.status(200).json({
 	    product_list_id: result.id,
