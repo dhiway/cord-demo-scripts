@@ -146,6 +146,8 @@ export async function createProductOnCord(id: any, schema: any, seller_name: str
 	console.log(e.errorCode, '-', e.message)
 	return {id: '', block: '', error: e.message};
     }
+
+    delegations[id.identifier][product.name] = newProduct.id;
     return { id: newProduct.id };
 }
 
@@ -261,6 +263,7 @@ let productOwner: any = undefined;
 let schemas: any[] = [];
 let productSchema: any = null;
 let gproducts: any = {};
+let delegations: any = {};
 
 export async function initializeCord() {
     await cord.init({ address: 'ws://localhost:9944' })
@@ -643,7 +646,8 @@ export async function getBlockDetails(
 }
 
 
-export async function checkDelegation(
+    
+export async function checkItemDelegation(
     req: express.Request,
     res: express.Response
 ) {
@@ -656,11 +660,12 @@ export async function checkDelegation(
         });
         return;
     }
-    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price, 1);
-    if (result.error) {
-	res.status(400).json(result);
-        return;
+    let pname: string = data.product?.name ? data.product?.name : 'Default Item';
+    if (delegations[data.identifier][pname]) {
+        /* Delegate added */
+	res.status(200).json({success: true});
+	return;
     }
-    res.status(200).json(result);
+    res.status(400).json({success: false, error: "delegation not found"});
     return;
 }

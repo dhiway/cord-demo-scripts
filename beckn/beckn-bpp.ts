@@ -211,7 +211,7 @@ export async function registerProducts(id: any, schema: any, product: any) {
 
 
 async function main(my_id: string, product: any) {
-    await cord.init({ address: 'wss://staging.cord.network' })
+    await cord.init({ address: 'wss://beckn.cord.network' })
 
     /* Create Identities - Can have a separate registry for this */
     if (!my_id || my_id === '') {
@@ -234,12 +234,6 @@ async function main(my_id: string, product: any) {
     return result;
 }
 
-exports.addProduct = main
-
-// When browserified - we can't call myFunction() from the HTML, so we'll externalize myExtFunction()
-// On the server-side "window" is undef. so we hide it.
-if (typeof window !== 'undefined') {
-    window.addProductToCord = function(my_id: string, product: any) {
-        return main(my_id, product);
-    }
-}
+main('//seller//2', {name: 'Grade A Shimla Apple})
+  .then(() => console.log('\nBye! 👋 👋 👋 '))
+  .finally(cord.disconnect)

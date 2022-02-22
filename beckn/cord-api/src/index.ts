@@ -4,7 +4,7 @@ const os = require('os');
 import express from 'express';
 import http from 'http';
 
-import { initializeCord, registerProduct, getBlockDetails, placeOrder } from './cord';
+import { initializeCord, registerProduct, getBlockDetails, placeOrder, checkItemDelegation } from './cord';
 
 const {
     PORT,
@@ -35,12 +35,7 @@ router.post('/order-confirm', async (req, res) => {
 
 router.post('/check-item-delegation', async (req, res) => {
     let data = req.body;
-    
-    if (data?.product?.name && ['Grade A Shimla Apple'].includes(data.product.name)) {
-	res.json({success: true});
-    } else {
-	res.status(400).json({success: false, error: "Delegation not present for product"});
-    }
+    checkItemDelegation(data.product);
     return;
 });
 
