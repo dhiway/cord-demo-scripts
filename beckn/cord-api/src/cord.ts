@@ -103,157 +103,6 @@ export async function createIdentities(my_id: string) {
     return { networkAuthor, productOwner, user }
 }
 
-
-export async function createProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any, qty: any) {
-    // Step 2: Setup a new Product
-    console.log(`\n✉️  Listening to new Product Additions`, '\n')
-    
-    let productStream = cord.Content.fromSchemaAndContent(
-	schema,
-	product,
-	id.productOwner!.address
-    )
-    
-    let newProductContent = cord.ContentStream.fromStreamContent(
-	productStream,
-	id.productOwner!
-    )
-
-    let bytes = json.encode(newProductContent)
-    let encoded_hash = await hasher.digest(bytes)
-    const streamCid = CID.create(1, 0xb220, encoded_hash)
-
-    let newProduct = cord.Product.fromProductContentAnchor(
-	newProductContent,
-	streamCid.toString(),
-	undefined, /*storeid */
-	undefined, /* price */
-	undefined, /* rating */
-	10000,
-    )
-
-    let productCreationExtrinsic = await newProduct.create()
-
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    productCreationExtrinsic,
-	    id.productOwner!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-	return {id: '', block: '', error: e.message};
-    }
-
-    delegations[id.identifier][product.name] = newProduct.id;
-    return { id: newProduct.id };
-}
-
-export async function registerProductOnCord(id: any, schema: any, seller_name: string, product: any, price: any, qty: any) {
-    // Step 2: Setup a new Product
-    console.log(`\n✉️  Listening to new Product Additions`, '\n')
-    
-    let productStream = cord.Content.fromSchemaAndContent(
-	schema,
-	product,
-	id.productOwner!.address
-    )
-    
-    let newProductContent = cord.ContentStream.fromStreamContent(
-	productStream,
-	id.productOwner!
-    )
-
-    let bytes = json.encode(newProductContent)
-    let encoded_hash = await hasher.digest(bytes)
-    const streamCid = CID.create(1, 0xb220, encoded_hash)
-
-    let newProduct = cord.Product.fromProductContentAnchor(
-	newProductContent,
-	streamCid.toString(),
-	undefined, /*storeid */
-	undefined, /* price */
-	undefined, /* rating */
-	10000,
-    )
-
-    //let productCreationExtrinsic = await newProduct.create()
-
-    /*
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    productCreationExtrinsic,
-	    id.productOwner!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-	return {id: '', block: '', error: e.message};
-    }
-    */
-    let listStream = cord.Content.fromSchemaAndContent(
-	schema,
-	productStream!.contents,
-	id.user!.address
-    )
-
-    let prodId = gproducts[product.name];
-    if (!prodId) {
-        prodId = newProduct!.id;
-    }
-    let newListingContent = cord.ContentStream.fromStreamContent(
-	listStream,
-	id.user!,
-	{
-	    link: prodId,
-	}
-    )
-
-    bytes = json.encode(newListingContent)
-    encoded_hash = await hasher.digest(bytes)
-    const listCid = CID.create(1, 0xb220, encoded_hash)
-    const storeVal = {
-	store: seller_name,
-	seller: id.user!.address,
-    }
-    const storeId = Crypto.hashObjectAsStr(storeVal)
-    
-    let sellingprice = price ? parseInt(price, 10) : parseInt(product.price, 10)
-    
-    let newListing = cord.Product.fromProductContentAnchor(
-	newListingContent,
-	listCid.toString(),
-	storeId.toString(),
-	sellingprice,
-	undefined,
-	qty
-    )
-
-    let listingCreationExtrinsic = await newListing.list()
-    let blkhash = '';
-    try {
-	let block = await cord.ChainUtils.signAndSubmitTx(
-	    listingCreationExtrinsic,
-	    id.networkAuthor!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	console.log("Success", block, newProduct, newListing, listingCreationExtrinsic);
-	blkhash = `${block.status.asInBlock}`;
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-	return { id: '', block: undefined };
-    }
-
-    console.log("Success Listing", newProduct, newListing);
-    return { id: newListing.id, block: blkhash } ;
-}
-
 let provider: any = null;
 let api: any = null;
 let seller_ids: any[] = ['//seller//1'];
@@ -266,9 +115,9 @@ let gproducts: any = {};
 let delegations: any = {};
 
 export async function initializeCord() {
-    await cord.init({ address: 'ws://localhost:9944' })
+    await cord.init({ address: 'wss://beckndemo.cord.network' })
 
-    provider = new WsProvider('ws://localhost:9944');
+    provider = new WsProvider('wss://beckndemo.cord.network');
     api = await ApiPromise.create({ provider});
 
     networkAuthor = cord.Identity.buildFromURI('//Alice', {
@@ -286,7 +135,8 @@ export async function initializeCord() {
 
     productSchema = cord.Schema.fromSchemaProperties(
 	prodSchemaContent,
-	productOwner!.address
+	productOwner!.address,
+	false /* usable without delegation */
     )
     let bytes = json.encode(productSchema)
     let encoded_hash = await hasher.digest(bytes)
@@ -308,299 +158,6 @@ export async function initializeCord() {
     } catch (e: any) {
 	console.log(e.errorCode, '-', e.message)
     }    
-}
-
-export async function buildSchema(id: any, name: string) {
-    /* TODO: should be done during seller registration */
-    let schContent = {...prodSchemaContent};
-    schContent.name = `Item: ${name}`;
-    let schm = cord.Schema.fromSchemaProperties(
-	schContent,
-	id.productOwner!.address
-    )
-    let bytes = json.encode(schm)
-    let encoded_hash = await hasher.digest(bytes)
-    const schemaCid = CID.create(1, 0xb220, encoded_hash)
-
-    let pSchemaExtrinsic = await schm.store(
-	schemaCid.toString()
-    )
-
-    return { success: true, schema: schm };
-}
-
-export async function registerSchema(id: any, name: string) {
-    /* TODO: should be done during seller registration */
-    let schContent = {...prodSchemaContent};
-    schContent.name = `Item: ${name}`;
-    let schm = cord.Schema.fromSchemaProperties(
-	schContent,
-	id.productOwner!.address
-    )
-    let bytes = json.encode(schm)
-    let encoded_hash = await hasher.digest(bytes)
-    const schemaCid = CID.create(1, 0xb220, encoded_hash)
-
-    let pSchemaExtrinsic = await schm.store(
-	schemaCid.toString()
-    )
-
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    pSchemaExtrinsic,
-	    id.productOwner!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	console.log('✅ Schema added: ${schm.id}')
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-	return { success: false, schema: schm }
-    }
-    console.dir(schm, { depth: null, colors: true })    
-    return { success: true, schema: schm };
-}
-
-export async function registerSchemaDelegate(id: any, name: string, schema: any, quantity: number) {
-    /* TODO: should be done during seller registration */
-
-    let productSchemaDelegateExtrinsic = await schema.add_delegate(
-	id.user!.address, quantity
-    )
-
-    try {
-	await cord.ChainUtils.signAndSubmitTx(
-	    productSchemaDelegateExtrinsic,
-	    id.productOwner!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	console.log('✅ Schema Delegation added: ${id.user!.address}')
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-	return { success: false, schema: schema }
-    }
-    console.dir(schema, { depth: null, colors: true })    
-    return { success: true, schema: schema };
-}
-
-async function registerProduct1(id: any, schema: any, seller: string, product: any, price: any, qty: any, full: boolean) {
-    // Step 2: Setup a new Product
-    let resp: any = null;
-    if (full) {
-	resp = await createProductOnCord(id, schema, seller, product, price, qty);
-	if (resp && resp.id !== '') {
-	    gproducts[product.name] = resp.id;
-	}
-    }
-    return await registerProductOnCord(id, schema, seller, product, price, qty);
-}
-
-
-export async function placeOrderOnCord(id: any, schema: any, product: any, listId: string, storeId: string, price: any, quantity: number) {
-    let orderStream = cord.Content.fromSchemaAndContent(
-	schema,
-	{name: "Hello"},
-	id.user!.address
-    )
-    let newOrderContent = cord.ContentStream.fromStreamContent(
-	orderStream,
-	id.user!,
-	{
-	    link: listId,
-	}
-    )
-
-    let bytes = json.encode(newOrderContent)
-    let encoded_hash = await hasher.digest(bytes)
-    const orderCid = CID.create(1, 0xb220, encoded_hash)
-
-    let newOrder = cord.Product.fromProductContentAnchor(
-	newOrderContent,
-	orderCid.toString(),
-	storeId,
-	price ? price : 0,
-	undefined, /* rating */
-	quantity
-    )
-
-    let orderCreationExtrinsic = await newOrder.order()
-
-    let blkhash: any = '';
-    try {
-	let block =  await cord.ChainUtils.signAndSubmitTx(
-	    orderCreationExtrinsic,
-	    id.networkAuthor!,
-	    {
-		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
-	    }
-	)
-	
-	console.log(`✅ Order (${newOrder.id}) created! `)
-	blkhash = `${block.status.asInBlock}`;
-    } catch (e: any) {
-	console.log(e.errorCode, '-', e.message)
-    }
-
-    return blkhash;
-}
-
-async function placeOrder1(my_id: string, listId: string, blockHash: string, price: any, quantity: number) {
-    /* Create Identities - Can have a separate registry for this */
-    let id = await createIdentities(my_id);
-
-    let signedBlock: any = undefined;
-    try {
-	signedBlock = await api.rpc.chain.getBlock(blockHash);
-    } catch(err) {
-	console.log("error to place order", err, blockHash);
-    }
-    if (!signedBlock) {
-	return {error: 'block Hash not valid'}
-    }
-
-    let storeId: string = '';
-    let listingId: string = '';
-    let product: any = {};
-    signedBlock.block.extrinsics.forEach(async (ex: any, index: number) => {
-	const { method: { args, method, section } } = ex;
-
-	if (method !== 'list' && section !== 'product') {
-	   return;
-	}
-
-	listingId = args[0].toString();
-
-	/* there can be more than 1 product.list events */
-	if (listingId === listId) {
-            /* This is matching now */
-	    storeId = args[3].toString();
-	    let item_price = args[4].toString();
-	    let product = cord.Product.fromProductAnchor(
-		listId,
-		args[2].toString(), /* contentHash */
-		args[5].toString(), /* cid */
-		args[1].toString(), /* creator */
-		storeId,
-		productSchema.id?.replace('cord:schema:',''),
-		parseInt(item_price, 10),
-		args[7].toString(), /* link */
-		0
-	    )
-	}
-    });
-
-    // Step 4: Create an Order from the lists
-    let block = await placeOrderOnCord(id, productSchema, product, listingId, storeId, price, quantity);
-
-    return {block: block}
-}
-
-
-export async function registerProduct(
-    req: express.Request,
-    res: express.Response
-) {
-
-    let data = req.body;
-
-    if (!data.identifier || data.identifier === '') {
-	res.status(400).json({
-            error: 'identifier is a required field'
-        });
-        return;
-    }
-    if (!data.product || data.product === '' || data.product === {}) {
-	res.status(400).json({
-            error: 'product is a required field'
-        });
-        return;
-    }
-    
-    let my_id = data.identifier;
-    let product: any = data.product;
-    let sellerName = data.seller_name;
-    if (!sellerName) {
-	sellerName = 'Default Seller';
-    }
-    let price = data.selling_price;
-    if (!price) {
-	price = 100;
-    }
-    let qty = data.quantity ? parseInt(data.quantity, 10): 500;
-    if (!qty) {
-	qty = 500;
-    }
-    /* TODO: this should be checked from delegation */
-    if (qty > 500) {
-	res.status(400).json({success: false, error: "quantity more than delegated"});	
-	return;
-    }
-    let full_cycle = data.full_cycle ? true : false;
-    /* Create Identities - Can have a separate registry for this */
-    if (!my_id || my_id === '') {
-        my_id = '//seller//default';
-    }
-    if (!product?.name) {
-	product = { ...product, name: "Default Item"};
-    }
-    let id = await createIdentities(my_id);
-
-    /* get the schema registered */
-    let schma: any = null;
-    if (full_cycle) {
-	let fail = true;
-	schma = await registerSchema(id, product.name);
-	if (schma.success) {
-		schma = await registerSchemaDelegate(id,
-						     product.name,
-						     schma.schema, 500);
-	} 
-    } else {
-	schma = await buildSchema(id, product.name);
-    }
-    let result = await registerProduct1(id,
-					schma.schema,
-					sellerName,
-					product,
-					price, qty, full_cycle);
-    if (result.id !== '') {
-	res.status(200).json({
-	    product_list_id: result.id,
-	    blockHash: result.block
-	});
-    } else {
-	res.status(400).json({success: false, error: "item.catalog addition confirmation failed"});
-    }
-
-    return;
-}
-
-
-export async function placeOrder(
-    req: express.Request,
-    res: express.Response
-) {
-
-    let data = req.body;
-
-    if (!data.identifier || data.identifier === '') {
-	res.status(400).json({
-            error: 'identifier is a required field'
-        });
-        return;
-    }
-    
-    let qty = data.quantity ? parseInt(data.quantity, 10): 1;
-    let result = await placeOrder1(data.identifier, data.listId, data.blockHash, data.order_price, qty);
-    if (result.error) {
-	res.status(400).json(result);
-        return;
-    }
-    res.status(200).json(result);
-    return;
 }
 
 export async function getBlockDetails(
@@ -645,27 +202,504 @@ export async function getBlockDetails(
     return;
 }
 
-
-    
-export async function checkItemDelegation(
+export async function itemCreate(
     req: express.Request,
     res: express.Response
 ) {
 
     let data = req.body;
 
-    if (!data.identifier || data.identifier === '') {
+    let userId = data.identifier;
+    if (!userId || userId === '') {
 	res.status(400).json({
             error: 'identifier is a required field'
         });
         return;
+    } else {
+      if (!userId.startsWith('//'))
+      	 userId = `//${userId}`;
     }
-    let pname: string = data.product?.name ? data.product?.name : 'Default Item';
-    if (delegations[data.identifier][pname]) {
-        /* Delegate added */
-	res.status(200).json({success: true});
+    
+    let qty = data.quantity ? parseInt(data.quantity, 10): 1;
+    
+    let price: number = 0;
+    try {
+	price = parseInt(data.selling_price ? data.selling_price : '0', 10);
+    } catch(err) {
+	console.log("Error: ", err);
+    }
+    if (!price) {
+	res.status(400).json({
+            error: 'selling_price is a required field'
+        });
+        return;
+    }
+
+    let product: any = data.product;
+    if (!product || !product.name || !product.sku) {
+	res.status(400).json({
+            error: 'product: {name, sku, ...} is a required field'
+        });
+        return;
+       
+    }
+    let seller_name: string = data.seller_name ? data.seller_name as string : '';
+    if (seller_name === '') {
+	res.status(400).json({
+            error: 'seller_name is a required field'
+        });
+        return;
+    }
+    let id = await createIdentities(userId);
+
+    let productStream = cord.Content.fromSchemaAndContent(
+	productSchema,
+	product,
+	id.user!.address
+    )
+    
+    let newProductContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	id.user!,
+	{
+	    nonceSalt: `${product.name}:${product.sku}:create`
+	}
+    )
+
+    const storeVal = {
+	store: seller_name,
+	seller: id.user!.address,
+    }
+    const storeId = Crypto.hashObjectAsStr(storeVal)
+    
+
+    let bytes = json.encode(newProductContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const streamCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newProduct = cord.Product.fromProductContentAnchor(
+	newProductContent,
+	streamCid.toString(),
+	storeId, /*storeid */
+	price, /* price */
+	undefined, /* rating */
+	qty,
+    )
+
+    let productCreationExtrinsic = await newProduct.create()
+
+    try {
+	let block = await cord.ChainUtils.signAndSubmitTx(
+	    productCreationExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	res.status(200).json({blockHash: `${block.status.asInBlock}`, id: newProduct.id, success: true});
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	res.status(400).json({error: e.message});
+    }
+
+    return;
+}
+
+export async function itemDelegate(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    let userId = data.identifier;
+    if (!userId || userId === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    } else {
+      if (!userId.startsWith('//'))
+      	 userId = `//${userId}`;
+    }
+    let delegateId = data.delegateId;
+    if (!delegateId || delegateId === '') {
+	res.status(400).json({
+            error: 'delegateId is a required field'
+        });
+        return;
+    } else {
+      if (!delegateId.startsWith('//'))
+      	 delegateId = `//${delegateId}`;
+    }
+
+    let qty: number = 1;
+    try {
+	qty = parseInt(data.quantity ? data.quantity : '1', 10);
+    } catch (err) {
+	console.log("Quanity: ", err);
+    }
+    
+    let price: number = 0;
+    try {
+	price = parseInt(data.selling_price ? data.selling_price : '0', 10);
+    } catch(err) {
+	console.log("Error: ", err);
+    }
+    if (!price) {
+	res.status(400).json({
+            error: 'selling_price is a required field'
+        });
+        return;
+    }
+
+    let product: any = data.product;
+    if (!product || !product.name || !product.sku) {
+	res.status(400).json({
+            error: 'product: {name, sku, ...} is a required field'
+        });
+        return;
+       
+    }
+    let seller_name: string = data.seller_name ? data.seller_name as string : '';
+    if (seller_name === '') {
+	res.status(400).json({
+            error: 'seller_name is a required field'
+        });
+        return;
+    }
+    let itemCreateId: string = data.createId ? data.createId as string : '';
+    if (itemCreateId === '') {
+	res.status(400).json({
+            error: '"createId" is a required field'
+        });
+        return;
+    }
+
+    let id = await createIdentities(userId);
+
+    let delegate = await createIdentities(delegateId);
+
+    let productStream = cord.Content.fromSchemaAndContent(
+	productSchema,
+	product,
+	delegate.user!.address
+    )
+
+    let newProductContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	delegate.user!,
+	{
+	    link: itemCreateId,
+	    nonceSalt: `${product.name}:${product.sku}:delegate`
+	}
+    )
+
+    const storeVal = {
+	store: seller_name,
+	seller: id.user!.address,
+    }
+    const storeId = Crypto.hashObjectAsStr(storeVal)
+    
+
+    let bytes = json.encode(newProductContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const streamCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newDelegate = cord.Product.fromProductContentAnchor(
+	newProductContent,
+	streamCid.toString(),
+	storeId, /*storeid */
+	price, /* price */
+	undefined, /* rating */
+	qty,
+    )
+
+    let productCreationExtrinsic = await newDelegate.delegate();
+    try {
+	let block = await cord.ChainUtils.signAndSubmitTx(
+	    productCreationExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	res.status(200).json({blockHash: `${block.status.asInBlock}`, id: newDelegate.id, success: true});
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	res.status(400).json({error: e.message});
+    }    
+
+    return;
+}
+
+export async function itemAdd(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    let userId = data.identifier;
+    if (!userId || userId === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    } else {
+      if (!userId.startsWith('//'))
+      	 userId = `//${userId}`;
+    }
+
+    let qty: number = 1;
+    try {
+	qty = parseInt(data.quantity ? data.quantity : '1', 10);
+    } catch (err) {
+	console.log("Quanity: ", err);
+    }
+    
+    let price: number = 0;
+    try {
+	price = parseInt(data.selling_price ? data.selling_price : '0', 10);
+    } catch(err) {
+	console.log("Error: ", err);
+    }
+    if (!price) {
+	res.status(400).json({
+            error: 'selling_price is a required field'
+        });
+        return;
+    }
+
+    let product: any = data.product;
+    if (!product || !product.name || !product.sku) {
+	res.status(400).json({
+            error: 'product: {name, sku, ...} is a required field'
+        });
+        return;
+       
+    }
+    let seller_name: string = data.seller_name ? data.seller_name as string : '';
+    if (seller_name === '') {
+	res.status(400).json({
+            error: 'seller_name is a required field'
+        });
+        return;
+    }
+    /*
+    let itemCreateId: string = data.listId ? data.listId as string : '';
+    if (itemCreateId === '') {
+	res.status(400).json({
+            error: '"listId" is a required field'
+        });
+        return;
+    }
+    */
+    let id = await createIdentities(userId);
+
+    let productStream = cord.Content.fromSchemaAndContent(
+	productSchema,
+	product,
+	id.user!.address
+    )
+
+    let newProductContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	id.user!,
+	{
+	    nonceSalt: `${product.name}:${product.sku}:create`
+	}
+    )
+
+    let newListContent = cord.ContentStream.fromStreamContent(
+	productStream,
+	id.user!,
+	{
+	    link: newProductContent.id.replace('cord:stream:', ''),
+	    nonceSalt: `${product.name}:${product.sku}:list`
+	}
+    )
+    
+    const storeVal = {
+	store: seller_name,
+	seller: id.user!.address,
+    }
+    const storeId = Crypto.hashObjectAsStr(storeVal)
+    
+
+    let bytes = json.encode(newProductContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const streamCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newListing = cord.Product.fromProductContentAnchor(
+	newListContent,
+	streamCid.toString(),
+	storeId, /*storeid */
+	price, /* price */
+	undefined, /* rating */
+	qty,
+    )
+
+    let productCreationExtrinsic = await newListing.list();
+    try {
+	let block = await cord.ChainUtils.signAndSubmitTx(
+	    productCreationExtrinsic,
+	    id.productOwner!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	res.status(200).json({blockHash: `${block.status.asInBlock}`, id: newListing.id, success: true});
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	res.status(400).json({error: e.message});
+    }
+    return;
+}
+
+export async function orderConfirm(
+    req: express.Request,
+    res: express.Response
+) {
+
+    let data = req.body;
+
+    let userId = data.identifier;
+    if (!userId || userId === '') {
+	res.status(400).json({
+            error: 'identifier is a required field'
+        });
+        return;
+    } else {
+      if (!userId.startsWith('//'))
+      	 userId = `//${userId}`;
+    }
+
+    let qty: number = 1;
+    try {
+	qty = parseInt(data.quantity ? data.quantity : '1', 10);
+    } catch (err) {
+	console.log("Quanity: ", err);
+    }
+    
+    let price: number = 0;
+    try {
+	price = parseInt(data.order_price ? data.order_price : '0', 10);
+    } catch(err) {
+	console.log("Error: ", err);
+    }
+    if (!price) {
+	res.status(400).json({
+            error: 'selling_price is a required field'
+        });
+        return;
+    }
+
+    let blockHash = data.blockHash;
+    if (!blockHash || blockHash === '') {
+	res.status(400).json({
+            error: 'blockHash is a required field'
+        });
+        return;
+    }
+    let listId = data.listId;
+    if (!listId || listId === '') {
+	res.status(400).json({
+            error: 'listId is a required field'
+        });
+        return;
+    }
+
+    let id = await createIdentities(userId);
+
+    let signedBlock: any = undefined;
+    try {
+	signedBlock = await api.rpc.chain.getBlock(blockHash);
+    } catch(err) {
+	console.log("error to place order", err, blockHash);
+    }
+    if (!signedBlock) {
+	return {error: 'block Hash not valid'}
+    }
+
+    let storeId: string = '';
+    let listingId: string = '';
+    let product: any = {};
+    signedBlock.block.extrinsics.forEach(async (ex: any, index: number) => {
+	const { method: { args, method, section } } = ex;
+
+	if (method !== 'list' && section !== 'product') {
+	   return;
+	}
+
+	listingId = args[0].toString();
+
+	/* there can be more than 1 product.list events */
+	if (listingId === listId) {
+            /* This is matching now */
+	    storeId = args[3].toString();
+	    let item_price = args[4].toString();
+	    let product = cord.Product.fromProductAnchor(
+		listId,
+		args[2].toString(), /* contentHash */
+		args[5].toString(), /* cid */
+		args[1].toString(), /* creator */
+		storeId,
+		productSchema.id?.replace('cord:schema:',''),
+		parseInt(item_price, 10),
+		args[7].toString(), /* link */
+		0,
+	    )
+	}
+    });
+
+    // Step 4: Create an Order from the lists
+    let orderStream = cord.Content.fromSchemaAndContent(
+	productSchema,
+	{name: "Hello"},
+	id.user!.address
+    )
+    let newOrderContent = cord.ContentStream.fromStreamContent(
+	orderStream,
+	id.user!,
+	{
+	    link: listingId,
+	    nonceSalt: UUID.generate(),
+	}
+    )
+
+    let bytes = json.encode(newOrderContent)
+    let encoded_hash = await hasher.digest(bytes)
+    const orderCid = CID.create(1, 0xb220, encoded_hash)
+
+    let newOrder = cord.Product.fromProductContentAnchor(
+	newOrderContent,
+	orderCid.toString(),
+	storeId,
+	price,
+	undefined, /* rating */
+	qty,
+    )
+
+    let orderCreationExtrinsic = await newOrder.order()
+
+    let blkhash: any = '';
+    try {
+	let block =  await cord.ChainUtils.signAndSubmitTx(
+	    orderCreationExtrinsic,
+	    id.networkAuthor!,
+	    {
+		resolveOn: cord.ChainUtils.IS_IN_BLOCK,
+	    }
+	)
+	
+	blkhash = `${block.status.asInBlock}`;
+	res.json({success: true, block: blkhash});
 	return;
+    } catch (e: any) {
+	console.log(e.errorCode, '-', e.message)
+	res.status(400).json({success: false, block: ''});
     }
-    res.status(400).json({success: false, error: "delegation not found"});
+
     return;
 }

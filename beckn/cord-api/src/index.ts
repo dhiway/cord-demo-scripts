@@ -4,7 +4,7 @@ const os = require('os');
 import express from 'express';
 import http from 'http';
 
-import { initializeCord, registerProduct, getBlockDetails, placeOrder, checkItemDelegation } from './cord';
+import { initializeCord, getBlockDetails, itemCreate, itemDelegate, itemAdd, orderConfirm } from './cord';
 
 const {
     PORT,
@@ -13,32 +13,21 @@ const {
 const app = express();
 let router = express.Router({ mergeParams: true });
 
-router.post('/register-product', async (req, res) => {
-    return await registerProduct(req, res);
+router.post('/item_create', async (req, res) => {
+    return await itemCreate(req, res);
 });
 
-router.post('/item-add', async (req, res) => {
-    return await registerProduct(req, res);
+router.post('/item_delegate', async (req, res) => {
+    return await itemDelegate(req, res);
 });
 
-//router.post('/delegate-schema', async (req, res) => {
-//    return await delegateSchema(req, res);
-//});
-
-router.post('/confirm-order', async (req, res) => {
-    return await placeOrder(req, res);
+router.post('/item_add', async (req, res) => {
+    return await itemAdd(req, res);
 });
 
-router.post('/order-confirm', async (req, res) => {
-    return await placeOrder(req, res);
+router.post('/order_confirm', async (req, res) => {
+    return await orderConfirm(req, res);
 });
-
-router.post('/check-item-delegation', async (req, res) => {
-    let data = req.body;
-    checkItemDelegation(data.product);
-    return;
-});
-
 
 router.get('/block/:hash', async (req, res) => {
     return await getBlockDetails(req, res);
