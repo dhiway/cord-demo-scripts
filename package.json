@@ -1,22 +1,20 @@
 {
-  "name": "cord-scripts",
+  "name": "cord-demo-scripts",
   "version": "0.0.1",
-  "repository": "https://github.com/dhiway/cord-scripts",
+  "repository": "https://github.com/dhiway/cord-demo-scripts",
   "scripts": {
-    "demo": "yarn ts-node src/demo.ts",
-    "start": "yarn ts-node src/start.ts"
+    "demo": "tsx src/demo.ts",
+    "demo-vc": "tsx --no-cache src/demo-vc.ts",
+    "start": "tsc src/start.ts"
   },
   "dependencies": {
-    "@cord.network/api": "0.5.2-3",
-    "@multiformats/blake2": "^1.0.5",
-    "multiformats": "^9.4.7",
+    "@cord.network/api": "^0.7.3-0",
+    "@cord.network/vc-export": "^0.7.3-0",
     "yargs": "^17.2.1"
   },
   "devDependencies": {
     "@types/yargs": "^17.0.2",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.2",
-    "wait-for-enter": "^1.0.0"
-  },
-  "packageManager": "yarn@3.0.2"
+    "tsx": "^3.4.3",
+    "typescript": "^4.5.4"
+  }
 }
