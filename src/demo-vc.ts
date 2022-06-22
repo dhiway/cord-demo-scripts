@@ -1,5 +1,6 @@
 import * as Cord from '@cord.network/api'
 import { UUID } from '@cord.network/utils'
+import * as VCUtils from '@cord.network/vc-export'
 
 async function main() {
   await Cord.init({ address: 'ws://127.0.0.1:9944' })
@@ -43,10 +44,7 @@ async function main() {
   spaceContent.title = spaceTitle
 
   let newSpace = Cord.Space.fromSpaceProperties(spaceContent, employeeIdentity)
-
   let spaceCreationExtrinsic = await newSpace.create()
-
-  console.dir(newSpace, { depth: null, colors: true })
 
   try {
     await Cord.ChainUtils.signAndSubmitTx(
@@ -57,7 +55,7 @@ async function main() {
         rejectOn: Cord.ChainUtils.IS_ERROR,
       }
     )
-    console.log('✅ Space created!')
+    console.log(`✅ ${newSpace.identifier} created!`)
   } catch (e: any) {
     console.log(e.errorCode, '-', e.message)
   }
@@ -77,8 +75,6 @@ async function main() {
 
   let schemaCreationExtrinsic = await newSchema.create()
 
-  console.dir(newSchema, { depth: null, colors: true })
-
   try {
     await Cord.ChainUtils.signAndSubmitTx(
       schemaCreationExtrinsic,
@@ -88,7 +84,7 @@ async function main() {
         rejectOn: Cord.ChainUtils.IS_ERROR,
       }
     )
-    console.log('✅ Schema created!')
+    console.log(`✅ ${newSchema.identifier} created!`)
   } catch (e: any) {
     console.log(e.errorCode, '-', e.message)
   }
@@ -139,87 +135,72 @@ async function main() {
     console.log(e.errorCode, '-', e.message)
   }
 
-  // Step 5: Update a Stream
-  console.log(`\n❄️  Update - ${newStreamContent.identifier}`)
-  const updateContent = JSON.parse(JSON.stringify(newStreamContent))
-  updateContent.content.contents.name = 'Alice Jackson'
+  // Step 4: Verifiable Credentials & Presentation
+  console.log(`\n❄️  Verifiable Credentials & Presentation `)
+  console.log(`🔗  ${newStream.identifier} `)
+  const stream = await Cord.Stream.query(newStream.identifier)
 
-  let updateStreamContent = Cord.ContentStream.updateContentProperties(
-    updateContent,
-    employeeIdentity
-  )
-  console.dir(updateStreamContent, { depth: null, colors: true })
-
-  let updateStream = Cord.Stream.fromContentStream(updateStreamContent)
-  let updateStreamCreationExtrinsic = await updateStream.update()
-  console.dir(updateStream, { depth: null, colors: true })
-
-  try {
-    await Cord.ChainUtils.signAndSubmitTx(
-      updateStreamCreationExtrinsic,
-      entityIdentity,
-      {
-        resolveOn: Cord.ChainUtils.IS_IN_BLOCK,
-        rejectOn: Cord.ChainUtils.IS_ERROR,
-      }
-    )
-    console.log('✅ Stream updated!')
-  } catch (e: any) {
-    console.log(e.errorCode, '-', e.message)
-  }
-
-  // Step 6: Validate a Credential
-  console.log(`\n❄️  Verify - ${updateStreamContent.identifier} `)
-  const stream = await Cord.Stream.query(updateStream.identifier)
+  let credential: Cord.Credential
   if (!stream) {
     console.log(`Stream not anchored on CORD`)
   } else {
-    const credential = Cord.Credential.fromRequestAndStream(
-      updateStreamContent,
-      stream
+    credential = Cord.Credential.fromRequestAndStream(newStreamContent, stream)
+    const VC = VCUtils.fromCredential(credential, holderIdentity, newSchema)
+    console.dir(VC, { depth: null, colors: true })
+    console.log('✅ Verifiable Credential created!')
+
+    console.log(`\n❄️  Verifiable Presentation - Selective Disclosure `)
+    const sharedCredential = JSON.parse(JSON.stringify(VC))
+    const vcPresentation = await VCUtils.presentation.makePresentation(
+      sharedCredential,
+      ['name', 'country']
     )
-    const isCredentialValid = await credential.verify()
-    console.log(`Is Alices's credential valid? ${isCredentialValid}`)
+    console.dir(vcPresentation, { depth: null, colors: true })
+    console.log('✅ Verifiable Presentation created!')
+
+    console.log(`\n❄️  Verifiy Presentation`)
+
+    const signatureResult = await VCUtils.verification.verifySelfSignedProof(
+      vcPresentation.verifiableCredential,
+      vcPresentation.verifiableCredential.proof[0]
+    )
+    const streamResult = await VCUtils.verification.verifyStreamProof(
+      vcPresentation.verifiableCredential,
+      vcPresentation.verifiableCredential.proof[1]
+    )
+
+    const digestResult = await VCUtils.verification.verifyCredentialDigestProof(
+      vcPresentation.verifiableCredential,
+      vcPresentation.verifiableCredential.proof[2]
+    )
+    if (
+      (!streamResult && !streamResult['verified']) ||
+      (!digestResult && !digestResult['verified']) ||
+      (!signatureResult && !signatureResult['verified'])
+    ) {
+      console.log(
+        `❌  Verification failed `,
+        'Signature Proof',
+        signatureResult['verified'],
+        'Stream Proof',
+        streamResult['verified'],
+        'Digest Proof',
+        digestResult['verified']
+      )
+    } else {
+      console.log(
+        '✅  All valid? ',
+        'Signature Proof',
+        signatureResult['verified'],
+        'Stream Proof',
+        streamResult['verified'],
+        'Digest Proof',
+        digestResult['verified']
+      )
+    }
   }
 
-  // Step 7: Validate a modified Credential
-  // TODO: fix error handling
-  // console.log(`\n❄️  Validate Credential - ${updateStream.identifier} `)
-  // const chainStream = await Cord.Stream.query(updateStream.identifier)
-  // if (!chainStream) {
-  //   console.log(`Stream not anchored on CORD`)
-  // } else {
-  //   console.dir(newStreamContent, { depth: null, colors: true })
-  //   const credential = Cord.Credential.fromRequestAndStream(
-  //     newStreamContent,
-  //     chainStream
-  //   )
-
-  //   const isCredentialValid = await credential.verify()
-  //   console.log(`Is Alices's modified credential valid? ${isCredentialValid}`)
-  // }
-
-  // Step 8: Revoke a Stream
-  console.log(`\n❄️  Revoke - ${updateStreamContent.identifier} `)
-  let revokeStream = updateStream
-
-  let revokeStreamCreationExtrinsic = await revokeStream.revoke(
-    employeeIdentity
-  )
-
-  try {
-    await Cord.ChainUtils.signAndSubmitTx(
-      revokeStreamCreationExtrinsic,
-      entityIdentity,
-      {
-        resolveOn: Cord.ChainUtils.IS_READY,
-        rejectOn: Cord.ChainUtils.IS_ERROR,
-      }
-    )
-    console.log('✅ Stream revoked!')
-  } catch (e: any) {
-    console.log(e.errorCode, '-', e.message)
-  }
+  //   await utils.waitForEnter('\n⏎ Press Enter to continue..')
 }
 main()
   .then(() => console.log('\nBye! 👋 👋 👋 '))
