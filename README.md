@@ -12,9 +12,10 @@
 
 * Step 2: install with `yarn install` once you are inside the repository.
 
-* Step 3: start the CORD Network in the developer mode.
+* Step 3: start the CORD Network in the developer mode (In another terminal)
   - `docker run --network host dhiway/cord:develop --dev`
   - Note that this exposes ports 9933/9944/30333
+  - You can watch the events and blocks finalization @ https://apps.cord.network/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer
 
 * Step 4: run the demo script with `yarn demo`. Understand whats happening by checking the code at `src/demo.ts`.
 
@@ -28,6 +29,8 @@
 * You can refer our white paper for multiple usecases through https://cord.network
 
 * To build on CORD chain, visit [cord project repo](https://github.com/dhiway/cord).
+  - SDK development work is happening at [CORD.js repository](https://github.com/dhiway/cord.js)
+  - SUBQL (Substrate's GraphQL update, which can help in organizing events and extrinsics happening on CORD chain) - [Repository](https://github.com/dhiway/cord-subql)
 
 * Reach out to CORD community by joining [Discord](https://discord.gg/V8AqufZu)
 
