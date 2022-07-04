@@ -1,15 +1,16 @@
 {
   "name": "cord-demo-scripts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": "https://github.com/dhiway/cord-demo-scripts",
   "scripts": {
     "demo": "tsx src/demo.ts",
     "demo-vc": "tsx --no-cache src/demo-vc.ts",
+    "demo-messaging": "tsx --no-cache src/demo-messaging.ts",
     "start": "tsc src/start.ts"
   },
   "dependencies": {
-    "@cord.network/api": "^0.7.3-0",
-    "@cord.network/vc-export": "^0.7.3-0",
+    "@cord.network/sdk": "^0.7.4-0",
+    "@cord.network/vc-export": "^0.7.4-0",
     "yargs": "^17.2.1"
   },
   "devDependencies": {
