@@ -14,79 +14,79 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cord.network/config@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/config@npm:0.7.5-0"
+"@cord.network/config@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/config@npm:0.7.7-1"
   dependencies:
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/utils": 0.7.7-1
     "@polkadot/api-augment": ^8.12.0
     typescript-logging: ^0.6.4
-  checksum: 50ebdbc6504a5a971227b37dbf871fe2cd3f3274b1db05ab255142b9f7e9d12df6c30aaa278472f4a2a3a1eaef300efede40119e093cffa140985868613e7d2d
+  checksum: f4f38898c7f7687d4816a43bb1c0901c8f67ab657683710c5dab668ea35070cf809b87f2cbac007812a7a640ffdc275438c731136eab460525f76d8d54816b56
   languageName: node
   linkType: hard
 
-"@cord.network/messaging@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/messaging@npm:0.7.5-0"
+"@cord.network/messaging@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/messaging@npm:0.7.7-1"
   dependencies:
-    "@cord.network/modules": 0.7.5-0
-    "@cord.network/types": 0.7.5-0
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/modules": 0.7.7-1
+    "@cord.network/types": 0.7.7-1
+    "@cord.network/utils": 0.7.7-1
     "@polkadot/api-augment": ^8.12.0
     "@polkadot/util": ^10.0.0
-  checksum: ae55e5ddb0b2a38cd7d5a4c0b4c80b861a9791a81a71071c4af7cb1f108e6525bac73fbee168c52fa183ddc37da3a5fa21d5c6e3897c70657f756304742aa5fe
+  checksum: 4a6bd95e7fac342bf8b8cdc2942b8fa56689cba845f41cc4b0cb94e75130144833484ae7c5f6270f7e32f9feeb25cbdf498c23713da4e6db65bef5d1b139054a
   languageName: node
   linkType: hard
 
-"@cord.network/modules@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/modules@npm:0.7.5-0"
+"@cord.network/modules@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/modules@npm:0.7.7-1"
   dependencies:
-    "@cord.network/config": 0.7.5-0
-    "@cord.network/network": 0.7.5-0
-    "@cord.network/types": 0.7.5-0
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/config": 0.7.7-1
+    "@cord.network/network": 0.7.7-1
+    "@cord.network/types": 0.7.7-1
+    "@cord.network/utils": 0.7.7-1
     "@polkadot/api": ^8.12.0
     "@polkadot/api-augment": ^8.12.0
     "@polkadot/keyring": ^10.0.0
     "@polkadot/types": ^8.12.0
     "@polkadot/util": ^10.0.0
     tweetnacl: ^1.0.3
-  checksum: 1571b6e991cd002fcd25c7b0ea5cd99d146a9e45ed78b4aa728107dac98ec535139ce931e1521d9fb64a34f1fd8855e50f9c7eaa159f2e0d520faea00a5153a7
+  checksum: a218906467a70326efe8ab91d5c17cf401c1c2c679b249f5259ee2d7ee59131bed43b4684870a0a41bb650983127842ac1dde5ac88eccb86cccb0a6a68751dec
   languageName: node
   linkType: hard
 
-"@cord.network/network@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/network@npm:0.7.5-0"
+"@cord.network/network@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/network@npm:0.7.7-1"
   dependencies:
-    "@cord.network/config": 0.7.5-0
-    "@cord.network/types": 0.7.5-0
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/config": 0.7.7-1
+    "@cord.network/types": 0.7.7-1
+    "@cord.network/utils": 0.7.7-1
     "@polkadot/api": ^8.12.0
     "@polkadot/api-augment": ^8.12.0
     "@polkadot/types": ^8.12.0
-  checksum: bacf1a402a93cceb46eafb3df609fb2da4e9616e9a031511d1d333a105a1073db06a36932541e5a875b12b7abcf2f421cdbe248da27b9a8123b528f6c87ab415
+  checksum: 7e4408dd8e1208200e30083dd277eeeda99ceb05382bbdb6fb39140b4e872835ec193c324b8f0a50b90d08391a2a8ad8fd27a3704122c2f13228f702935dd9c1
   languageName: node
   linkType: hard
 
-"@cord.network/sdk@npm:^0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/sdk@npm:0.7.5-0"
+"@cord.network/sdk@npm:^0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/sdk@npm:0.7.7-1"
   dependencies:
-    "@cord.network/messaging": 0.7.5-0
-    "@cord.network/modules": 0.7.5-0
-    "@cord.network/network": 0.7.5-0
-    "@cord.network/types": 0.7.5-0
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/messaging": 0.7.7-1
+    "@cord.network/modules": 0.7.7-1
+    "@cord.network/network": 0.7.7-1
+    "@cord.network/types": 0.7.7-1
+    "@cord.network/utils": 0.7.7-1
     "@polkadot/api-augment": ^8.12.0
-  checksum: f5c631bb9c8fa8bea3d79268cb84bf9b9f4e6bb1938790da35bae6e63e9b73d2e8cd79a2d1ca55bb34da2fcaa0ceee21135d1246f64b47dcefe2b30312413f46
+  checksum: bb303400a2ebbc22876e6e6873e42552c0e87d70d97f6dd92b47de56a4f8328cf4bbf5fb549ead23f1ff81843a6f207df866c1de5d19f5c421e4297f2712f280
   languageName: node
   linkType: hard
 
-"@cord.network/types@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/types@npm:0.7.5-0"
+"@cord.network/types@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/types@npm:0.7.7-1"
   dependencies:
     "@polkadot/api": ^8.12.0
     "@polkadot/api-augment": ^8.12.0
@@ -94,15 +94,15 @@ __metadata:
     "@polkadot/types": ^8.12.0
     "@polkadot/util": ^10.0.0
     tweetnacl: ^1.0.3
-  checksum: 9ca994f118650276745d8b7d2125d273f0bdeda00f851d9a4ca161f2d95a361ed1257ceeee681aaebb20f9101b59c451da96b443ee948132ba79b8ce1f9494dd
+  checksum: 7a0a1b839c27dcb7245a0051919ee660e26552a7b5536d484c2ac5818e4bc8b88c8d6072045dbcbe282ee769789a7366e75707f55e2311c54ea1066efd429f1c
   languageName: node
   linkType: hard
 
-"@cord.network/utils@npm:0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/utils@npm:0.7.5-0"
+"@cord.network/utils@npm:0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/utils@npm:0.7.7-1"
   dependencies:
-    "@cord.network/types": 0.7.5-0
+    "@cord.network/types": 0.7.7-1
     "@polkadot/api-augment": ^8.12.0
     "@polkadot/keyring": ^10.0.0
     "@polkadot/types": ^8.12.0
@@ -110,18 +110,18 @@ __metadata:
     "@polkadot/util-crypto": ^10.0.0
     tweetnacl: ^1.0.3
     uuid: ^8.1.0
-  checksum: a4cd398611058d448eebcf93226872e8803849e945c46618b9444b4ee587c4e57a96f0d4f8d99b9eb34e8acecfe3d7e2bd45cb96c94c8c802371f7b5732b789c
+  checksum: 9d64cb9fa508dc8760bed1513b88462c0c5742880658fca53aafdeb9ed3031cffc0dd381caf8062186016f375b4d43a4477cedd3bf4160b5d6b077707e8eb80a
   languageName: node
   linkType: hard
 
-"@cord.network/vc-export@npm:^0.7.5-0":
-  version: 0.7.5-0
-  resolution: "@cord.network/vc-export@npm:0.7.5-0"
+"@cord.network/vc-export@npm:^0.7.7-1":
+  version: 0.7.7-1
+  resolution: "@cord.network/vc-export@npm:0.7.7-1"
   dependencies:
-    "@cord.network/modules": 0.7.5-0
-    "@cord.network/network": 0.7.5-0
-    "@cord.network/types": 0.7.5-0
-    "@cord.network/utils": 0.7.5-0
+    "@cord.network/modules": 0.7.7-1
+    "@cord.network/network": 0.7.7-1
+    "@cord.network/types": 0.7.7-1
+    "@cord.network/utils": 0.7.7-1
     "@digitalbazaar/vc": ^4.0.0
     "@polkadot/api": ^8.12.0
     "@polkadot/api-augment": ^8.12.0
@@ -130,7 +130,7 @@ __metadata:
     "@polkadot/util-crypto": ^10.0.0
     jsonld: ^6.0.0
     jsonld-signatures: ^10.0.0
-  checksum: 04779e47c132212f73aee2f89528e44d007d1beb3755e587ca87540e99b200d8b7fd89d47d7a9f423b21a0a2b2633eab229d78cecb72f85f410f3e3c8a2fa90e
+  checksum: d1ce8a638bd47807f43860e15e2668f2ba1aafa48a38986fdf56cac55a8dbbd4daca18f98399bd72577664d833ef86a0e7a3ee4804d8e0003cda0eb7d3571e2a
   languageName: node
   linkType: hard
 
@@ -996,8 +996,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "cord-demo-scripts@workspace:."
   dependencies:
-    "@cord.network/sdk": ^0.7.5-0
-    "@cord.network/vc-export": ^0.7.5-0
+    "@cord.network/sdk": ^0.7.7-1
+    "@cord.network/vc-export": ^0.7.7-1
     "@types/yargs": ^17.0.2
     tsx: ^3.4.3
     typescript: ^4.5.4
