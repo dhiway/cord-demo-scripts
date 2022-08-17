@@ -5,12 +5,13 @@
   "scripts": {
     "demo": "tsx src/demo.ts",
     "demo-vc": "tsx --no-cache src/demo-vc.ts",
+    "demo-meta": "tsx --no-cache src/demo-meta.ts",
     "demo-messaging": "tsx --no-cache src/demo-messaging.ts",
     "start": "tsc src/start.ts"
   },
   "dependencies": {
-    "@cord.network/sdk": "^0.7.5-0",
-    "@cord.network/vc-export": "^0.7.5-0",
+    "@cord.network/sdk": "^0.7.7-1",
+    "@cord.network/vc-export": "^0.7.7-1",
     "yargs": "^17.2.1"
   },
   "devDependencies": {
