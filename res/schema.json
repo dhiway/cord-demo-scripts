@@ -6,6 +6,7 @@
         "version": "1.0.0",
         "discoverable": true
     },
+    "required": [ "name" ],
     "properties": {
         "name": {
             "type": "string"
