@@ -16,8 +16,13 @@ function getRandomFloat(min: number, max: number, decimals: number) {
   return parseFloat(str)
 }
 async function main() {
-  await Cord.init({ address: 'ws://127.0.0.1:9944' })
-  const wsProvider = new WsProvider('ws://127.0.0.1:9944')
+  // localhost
+  // await Cord.init({ address: 'ws://127.0.0.1:9944' })
+  // const wsProvider = new WsProvider('ws://127.0.0.1:9944')
+  //staging
+  await Cord.init({ address: "wss://staging.cord.network" });
+  const wsProvider = new WsProvider('wss://staging.cord.network')
+  
   const api = await ApiPromise.create({ provider: wsProvider })
 
   // Step 1: Setup Identities
@@ -75,7 +80,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.overall,
-      score: getRandomFloat(1.5, 4.5, 2),
+      score: getRandomFloat(1.5, 4.5, 1),
     }
 
     let newOverallPoolJournalEntry = Cord.Score.fromJournalProperties(
@@ -99,7 +104,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.delivery,
-      score: getRandomFloat(0.5, 3.5, 2),
+      score: getRandomFloat(0.5, 3.5, 1),
     }
     let newDeliveryPoolJournalEntry = Cord.Score.fromJournalProperties(
       deliveryPoolEntryContent,
@@ -148,7 +153,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.overall,
-      score: getRandomFloat(1.5, 4.5, 2),
+      score: getRandomFloat(1.5, 4.5, 1),
     }
 
     let newOverallJournalEntry = Cord.Score.fromJournalProperties(
@@ -170,7 +175,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.delivery,
-      score: getRandomFloat(0.5, 3.5, 2),
+      score: getRandomFloat(0.5, 3.5, 1),
     }
     let newDeliveryJournalEntry = Cord.Score.fromJournalProperties(
       deliveryEntryContent,
