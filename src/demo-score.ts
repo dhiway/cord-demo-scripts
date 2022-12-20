@@ -2,21 +2,27 @@ import * as Cord from "@cord.network/sdk";
 import { ScoreType } from "@cord.network/types";
 import { UUID } from "@cord.network/utils";
 
+function getRandomFloat(min: number, max: number, decimals: number) {
+  const str = (Math.random() * (max - min) + min).toFixed(decimals)
+
+  return parseFloat(str)
+}
+
 async function main() {
-  await Cord.init({ address: "ws://127.0.0.1:9944" });
-  // await Cord.init({ address: "wss://staging.cord.network" });
+  // await Cord.init({ address: "ws://127.0.0.1:9944" });
+  await Cord.init({ address: "wss://staging.cord.network" });
 
   // Step 1: Setup Org Identity
   console.log(`\n❄️  Demo Identities (KeyRing)`);
   //3x4DHc1rxVAEqKWSx1DAAA8wZxLB4VhiRbMV997niBckUwSi
   const sellerIdentity = Cord.Identity.buildFromURI("//Entity", {
-    signingKeyPairType: "sr25519",
+    signingKeyPairType: "ed25519",
   });
   console.log(
     `🏛  Seller Entity (${sellerIdentity.signingKeyType}): ${sellerIdentity.address}`
   );
   const deliveryIdentity = Cord.Identity.buildFromURI("//Delivery", {
-    signingKeyPairType: "sr25519",
+    signingKeyPairType: "ed25519",
   });
   console.log(
     `🏛  Delivery Entity (${deliveryIdentity.signingKeyType}): ${deliveryIdentity.address}`
@@ -34,7 +40,7 @@ async function main() {
     `👩‍⚕️ Score Requestor (${requestorIdentity.signingKeyType}): ${requestorIdentity.address}`
   );
   const transactionAuthor = Cord.Identity.buildFromURI("//Bob", {
-    signingKeyPairType: "sr25519",
+    signingKeyPairType: "ed25519",
   });
   console.log(
     `🏢 Transaction Author (${transactionAuthor.signingKeyType}): ${transactionAuthor.address}`
@@ -50,7 +56,7 @@ async function main() {
     collector: collectorIdentity.address,
     requestor: requestorIdentity.address,
     scoreType: ScoreType.overall,
-    score: 3.7,
+    score: getRandomFloat(2.8, 4.7, 1),
   };
   console.dir(journalContent, { depth: null, colors: true });
 
