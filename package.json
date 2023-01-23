@@ -8,7 +8,7 @@
     "demo-meta": "tsx --no-cache src/demo-meta.ts",
     "demo-messaging": "tsx --no-cache src/demo-messaging.ts",
     "demo-score": "tsx --no-cache src/demo-score.ts",
-    "demo-score-batch": "tsx --no-cache src/demo-score.ts",
+    "demo-score-batch": "tsx --no-cache src/demo-score-batch.ts",
     "score-bench": "tsx --no-cache src/score-bench.ts"
   },
   "dependencies": {
