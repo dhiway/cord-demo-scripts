@@ -13,8 +13,13 @@ export const sleep = (ms: number): Promise<void> => {
 };
 
 async function main() {
-  await Cord.init({ address: "ws://127.0.0.1:9944" });
-  const wsProvider = new WsProvider("ws://127.0.0.1:9944");
+  // localhost
+  await Cord.init({ address: 'ws://127.0.0.1:9944' })
+  const wsProvider = new WsProvider('ws://127.0.0.1:9944')
+  //staging
+  // await Cord.init({ address: "wss://staging.cord.network" });
+  // const wsProvider = new WsProvider('wss://staging.cord.network')
+
   const api = await ApiPromise.create({ provider: wsProvider });
 
   // Step 1: Setup Identities
@@ -27,7 +32,7 @@ async function main() {
   let tx_batch: any = [];
 
   let startTxPrep = moment();
-  let txCount = 1000;
+  let txCount = 6000;
   console.log(`\n ✨ Benchmark ${txCount} transactions `);
 
   for (let j = 0; j < txCount; j++) {
