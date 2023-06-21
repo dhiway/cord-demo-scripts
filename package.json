@@ -3,15 +3,19 @@
   "version": "0.0.2",
   "repository": "https://github.com/dhiway/cord-demo-scripts",
   "scripts": {
-    "demo": "tsx src/demo.ts",
+    "demo": "tsx --no-cache src/demo.ts",
     "demo-vc": "tsx --no-cache src/demo-vc.ts",
     "demo-meta": "tsx --no-cache src/demo-meta.ts",
     "demo-messaging": "tsx --no-cache src/demo-messaging.ts",
     "demo-score": "tsx --no-cache src/demo-score.ts",
     "start": "tsc src/start.ts"
+    "demo-sparknet": "tsx --no-cache demo/src/demo-sparknet.ts",
+    "create-custom-schema": "tsx --no-cache demo/src/create-custom-schema",
+    "bench": "tsx demo/src/bench.ts",
+    "stream-bench": "tsx --no-cache demo/src/stream-bench",
   },
   "dependencies": {
-    "@cord.network/sdk": "^0.7.8-1",
+    "@cord.network/sdk": "^0.8.0-3",
     "@cord.network/vc-export": "^0.7.8-1",
     "yargs": "^17.2.1"
   },
