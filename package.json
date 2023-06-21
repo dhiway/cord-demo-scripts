@@ -12,6 +12,7 @@
     "demo-sparknet": "tsx --no-cache demo/src/demo-sparknet.ts",
     "create-custom-schema": "tsx --no-cache demo/src/create-custom-schema",
     "bench": "tsx demo/src/bench.ts",
+    "stream-bench": "tsx --no-cache demo/src/stream-bench",
   },
   "dependencies": {
     "@cord.network/sdk": "^0.7.8-1",
