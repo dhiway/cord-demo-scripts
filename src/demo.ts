@@ -37,9 +37,7 @@ async function main() {
   // Setup transaction author account - CORD Account.
 
   console.log(`\n❄️  New Authority`)
-  let authorityAuthorIdentity: Cord.CordKeyringPair
-
-    authorityAuthorIdentity = Crypto.makeKeypairFromUri(
+  const authorityAuthorIdentity: Cord.CordKeyringPair = Crypto.makeKeypairFromUri(
     anchorUri,
     'sr25519'
   )
