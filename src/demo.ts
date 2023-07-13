@@ -21,13 +21,15 @@ import { encryptMessage } from './utils/encrypt_message'
 import { generateRequestCredentialMessage } from './utils/request_credential_message'
 import { getChainCredits, addAuthority } from './utils/createAuthorities'
 import { createAccount } from './utils/createAccount'
+const { NETWORK_ADDRESS, ANCHOR_URI } = process.env
 
 function getChallenge(): string {
   return Cord.Utils.UUID.generate()
 }
 
 async function main() {
-  const networkAddress = 'ws://127.0.0.1:9944'
+  const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network';
+  const anchorUri = ANCHOR_URI ?? '//Sparknet//1//Demo'
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
 
@@ -35,10 +37,13 @@ async function main() {
   // Setup transaction author account - CORD Account.
 
   console.log(`\n❄️  New Authority`)
-  const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
-    '//Alice',
+  let authorityAuthorIdentity: Cord.CordKeyringPair
+
+    authorityAuthorIdentity = Crypto.makeKeypairFromUri(
+    anchorUri,
     'sr25519'
   )
+  
   // Setup author authority account.
   const { account: authorIdentity } = await createAccount()
   console.log(`🏦  Author (${authorIdentity.type}): ${authorIdentity.address}`)
