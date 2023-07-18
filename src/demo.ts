@@ -36,16 +36,28 @@ async function main() {
   // Step 1: Setup Authority
   // Setup transaction author account - CORD Account.
 
-  console.log(`\n❄️  New Authority`)
-  const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
+  console.log(`\n❄️  Creating a new Authority`)
+  const authorityIdentity = Crypto.makeKeypairFromUri(
     anchorUri,
     'sr25519'
   )
+  let authorityAuthorIdentity : Cord.CordKeyringPair
+  if(anchorUri == '//Alice'){
+    const { account: authorIdentity } = await createAccount()
+    console.log(`🏦  Author (${authorIdentity.type}): ${authorIdentity.address}`)
+    await addAuthority(authorityIdentity, authorIdentity.address)
+    console.log(`🔏  Author permissions updated`)
+    await getChainCredits(authorityIdentity, authorIdentity.address, 5)
+    console.log(`💸  Author endowed with credits`)
+    authorityAuthorIdentity= authorityIdentity
+    console.log('✅ Authority created!')
+  }
+  else{
+    authorityAuthorIdentity = authorityIdentity
+  }
   console.log("AuthorIdentity for this run: ", authorityAuthorIdentity.address);
-  
   // Step 2: Setup Identities
   console.log(`\n❄️  Demo Identities (KeyRing)`)
-
   /* Creating the DIDs for the different parties involved in the demo. */
   // Create Verifier DID
   const { mnemonic: verifierMnemonic, document: verifierDid } = await createDid(
