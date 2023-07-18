@@ -22,13 +22,13 @@ import { generateRequestCredentialMessage } from './utils/request_credential_mes
 import { getChainCredits, addAuthority } from './utils/createAuthorities'
 import { createAccount } from './utils/createAccount'
 const { NETWORK_ADDRESS, ANCHOR_URI } = process.env
-
 function getChallenge(): string {
   return Cord.Utils.UUID.generate()
 }
 
 async function main() {
-  const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network';
+
+  const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network'
   const anchorUri = ANCHOR_URI ?? '//Sparknet//1//Demo'
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
@@ -37,27 +37,19 @@ async function main() {
   // Setup transaction author account - CORD Account.
 
   console.log(`\n❄️  New Authority`)
-  const authorityAuthorIdentity: Cord.CordKeyringPair = Crypto.makeKeypairFromUri(
+  const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
     anchorUri,
     'sr25519'
   )
+  console.log("Sparknet (AuthorIdentity for this run): ", authorityAuthorIdentity.address);
   
-  // Setup author authority account.
-  const { account: authorIdentity } = await createAccount()
-  console.log(`🏦  Author (${authorIdentity.type}): ${authorIdentity.address}`)
-  await addAuthority(authorityAuthorIdentity, authorIdentity.address)
-  console.log(`🔏  Author permissions updated`)
-  await getChainCredits(authorityAuthorIdentity, authorIdentity.address, 5)
-  console.log(`💸  Author endowed with credits`)
-  console.log('✅ Authority created!')
-
   // Step 2: Setup Identities
   console.log(`\n❄️  Demo Identities (KeyRing)`)
 
   /* Creating the DIDs for the different parties involved in the demo. */
   // Create Verifier DID
   const { mnemonic: verifierMnemonic, document: verifierDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const verifierKeys = generateKeypairs(verifierMnemonic)
   console.log(
@@ -65,7 +57,7 @@ async function main() {
   )
   // Create Holder DID
   const { mnemonic: holderMnemonic, document: holderDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const holderKeys = generateKeypairs(holderMnemonic)
   console.log(
@@ -73,7 +65,7 @@ async function main() {
   )
   // Create issuer DID
   const { mnemonic: issuerMnemonic, document: issuerDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const issuerKeys = generateKeypairs(issuerMnemonic)
   console.log(
@@ -89,7 +81,7 @@ async function main() {
   })
   // Create Delegate One DID
   const { mnemonic: delegateOneMnemonic, document: delegateOneDid } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegateOneKeys = generateKeypairs(delegateOneMnemonic)
   console.log(
     `🏛   Delegate (${delegateOneDid?.assertionMethod![0].type}): ${
@@ -98,7 +90,7 @@ async function main() {
   )
   // Create Delegate Two DID
   const { mnemonic: delegateTwoMnemonic, document: delegateTwoDid } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegateTwoKeys = generateKeypairs(delegateTwoMnemonic)
   console.log(
     `🏛   Delegate (${delegateTwoDid?.assertionMethod![0].type}): ${
@@ -107,7 +99,7 @@ async function main() {
   )
   // Create Delegate 3 DID
   const { mnemonic: delegate3Mnemonic, document: delegate3Did } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegate3Keys = generateKeypairs(delegate3Mnemonic)
   console.log(
     `🏛   Delegate (${delegate3Did?.assertionMethod![0].type}): ${
@@ -122,7 +114,7 @@ async function main() {
 
   await createDidName(
     issuerDid.uri,
-    authorIdentity,
+    authorityAuthorIdentity,
     randomDidName,
     async ({ data }) => ({
       signature: issuerKeys.authentication.sign(data),
@@ -135,7 +127,7 @@ async function main() {
   // Step 2: Create a new Schema
   console.log(`\n❄️  Schema Creation `)
   const schema = await ensureStoredSchema(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     async ({ data }) => ({
       signature: issuerKeys.assertionMethod.sign(data),
@@ -151,7 +143,7 @@ async function main() {
   // Step 3: Create a new Registry
   console.log(`\n❄️  Registry Creation `)
   const registry = await ensureStoredRegistry(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     schema['$id'],
     async ({ data }) => ({
@@ -168,7 +160,7 @@ async function main() {
   // Step 4: Add Delelegate One as Registry Admin
   console.log(`\n❄️  Registry Admin Delegate Authorization `)
   const registryAuthority = await addRegistryAdminDelegate(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     registry['identifier'],
     delegateOneDid.uri,
@@ -182,7 +174,7 @@ async function main() {
   // Step 4: Add Delelegate Two as Registry Delegate
   console.log(`\n❄️  Registry Delegate Authorization `)
   const registryDelegate = await addRegistryDelegate(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     registry['identifier'],
     delegateTwoDid.uri,
@@ -213,7 +205,7 @@ async function main() {
   })
   await createStream(
     delegateTwoDid.uri,
-    authorIdentity,
+    authorityAuthorIdentity,
     async ({ data }) => ({
       signature: delegateTwoKeys.assertionMethod.sign(data),
       keyType: delegateTwoKeys.assertionMethod.type,
@@ -278,7 +270,7 @@ async function main() {
   console.log(`\n❄️  Revoke credential - ${document.identifier}`)
   await revokeCredential(
     delegateTwoDid.uri,
-    authorIdentity,
+    authorityAuthorIdentity,
     async ({ data }) => ({
       signature: delegateTwoKeys.assertionMethod.sign(data),
       keyType: delegateTwoKeys.assertionMethod.type,
