@@ -6,6 +6,26 @@
 * Have [`yarn`](https://yarnpkg.com/) installed and ready.
 * Any web browser (which supports javascript) to check transactions on the CORD Chain.
 
+## How to run the demo code with DOCKER
+
+* Step 1: checkout/clone this repository.
+
+* Step 2: build image locally 
+```sh
+   sudo docker build -t <docker-image-name> .
+```
+* Step 3: run `docker`
+  i) Run demo on sparknet node
+```sh
+      sudo docker run <docker-image-name>
+```
+
+  ii) Run demo on custom node
+```sh 
+     sudo docker run --env NETWORK_ADDRESS='wss://sparknet.cord.network' --env ANCHOR_URI='//Sparknet//1//Demo' <docker-image-name>`
+```
+  -  Here values of `NETWORK_ADDRESS` and `ANCHOR_URI` can be changed according to your use case.
+
 ## How to run the demo code (with local node)
 
 * Step 1: checkout/clone this repository.
