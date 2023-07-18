@@ -41,7 +41,7 @@ async function main() {
     anchorUri,
     'sr25519'
   )
-  console.log("Sparknet (AuthorIdentity for this run): ", authorityAuthorIdentity.address);
+  console.log("AuthorIdentity for this run: ", authorityAuthorIdentity.address);
   
   // Step 2: Setup Identities
   console.log(`\n❄️  Demo Identities (KeyRing)`)
