@@ -1,5 +1,3 @@
 Dockerfile
 README.md
-.github/*
-.git/*
-*.yml
+node_modules
