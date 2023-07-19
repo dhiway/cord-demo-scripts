@@ -18,7 +18,7 @@ sudo docker build -t <docker-image-name> .
   
   i) Run demo on sparknet node
 ```sh
-sudo docker run <docker-image-name>
+sudo docker run <docker-image-name> demo
 ```
 
   ii) Run demo on custom node
