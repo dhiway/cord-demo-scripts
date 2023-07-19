@@ -16,15 +16,16 @@ sudo docker build -t <docker-image-name> .
 ```
 * Step 3: run docker image
   
-  i) Run demo on sparknet node
+i) Run demo on sparknet node
 ```sh
 sudo docker run <docker-image-name> demo
 ```
-
   ii) Run demo on custom node
-```sh 
-sudo docker run --env NETWORK_ADDRESS='wss://sparknet.cord.network' --env ANCHOR_URI='//Sparknet//1//Demo' <docker-image-name>`
+  ```sh 
+sudo docker run --env NETWORK_ADDRESS='<network-address>' --env ANCHOR_URI='<anchor-uri>' <docker-image-name> demo
 ```
+Example : `sudo docker run --env NETWORK_ADDRESS='ws://127.0.0.1:9944' --env ANCHOR_URI='//Alice' <docker-image-name> demo`
+
   -  Here values of `NETWORK_ADDRESS` and `ANCHOR_URI` can be changed according to your use case.
 
 ## How to run the demo code (with local node)
