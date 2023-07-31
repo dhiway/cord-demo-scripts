@@ -1,4 +1,4 @@
-FROM node:18-slim
+FROM node
 
 LABEL maintainer="engineering@dhiway.com"
 
