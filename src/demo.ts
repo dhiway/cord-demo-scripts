@@ -26,6 +26,12 @@ function getChallenge(): string {
   return Cord.Utils.UUID.generate()
 }
 
+const timeoutId = setTimeout(() => {
+  console.log("\nTime out. Bye! ⏰ ⏰ ⏰ ")
+  Cord.disconnect()
+  process.exit(1)
+}, 60000)
+
 async function main() {
 
   const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network'
@@ -307,9 +313,11 @@ async function main() {
   } else {
     console.log('✅ Verification failed! 🚫')
   }
+  
 }
+
 main()
-  .then(() => console.log('\nBye! 👋 👋 👋 '))
+  .then(() => {console.log('\nBye! 👋 👋 👋 '),clearTimeout(timeoutId)})
   .finally(Cord.disconnect)
 
 process.on('SIGINT', async () => {
