@@ -30,7 +30,7 @@ const timeoutId = setTimeout(() => {
   console.log("\nTime out. Bye! ⏰ ⏰ ⏰ ")
   Cord.disconnect()
   process.exit(1)
-}, 60000)
+}, 120000)
 
 async function main() {
 
