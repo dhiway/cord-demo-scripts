@@ -21,7 +21,7 @@ import { encryptMessage } from './utils/encrypt_message'
 import { generateRequestCredentialMessage } from './utils/request_credential_message'
 import { getChainCredits, addAuthority } from './utils/createAuthorities'
 import { createAccount } from './utils/createAccount'
-const { NETWORK_ADDRESS, ANCHOR_URI } = process.env
+const { NETWORK_ADDRESS, ANCHOR_URI, DID_NAME } = process.env
 function getChallenge(): string {
   return Cord.Utils.UUID.generate()
 }
@@ -35,6 +35,7 @@ const timeoutId = setTimeout(() => {
 async function main() {
 
   const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network'
+  const didName = DID_NAME ?? `infinite.sentinel`
   const anchorUri = ANCHOR_URI ?? '//Sparknet//1//Demo'
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
@@ -129,8 +130,8 @@ async function main() {
 
   // Step 2: Create a DID name for Issuer
   console.log(`\n❄️  DID name Creation `)
-  const randomDidName = `solar.sailer.${randomUUID().substring(0, 4)}@cord`
-
+  const randomDidName = `${didName}.${randomUUID().substring(0, 8)}@cord`
+  
   await createDidName(
     issuerDid.uri,
     authorityAuthorIdentity,
