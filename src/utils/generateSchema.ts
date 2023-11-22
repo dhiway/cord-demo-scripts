@@ -33,7 +33,11 @@ export async function ensureStoredSchema(
       country: {
         type: 'string',
       },
+      address: {
+        type: 'object',
+      },
     },
+    [ 'name', 'id', 'age' ],
     creator
   )
 

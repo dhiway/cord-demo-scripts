@@ -13,15 +13,22 @@ import {
 import { createDocument } from './utils/createDocument'
 import { createPresentation } from './utils/createPresentation'
 import { createStatement } from './utils/createStatement'
+import { verifyPresentation } from './utils/verifyPresentation'
+import { revokeCredential } from './utils/revokeCredential'
 import { randomUUID } from 'crypto'
+import { decryptMessage } from './utils/decrypt_message'
+import { encryptMessage } from './utils/encrypt_message'
+import { generateRequestCredentialMessage } from './utils/request_credential_message'
 import { getChainCredits, addAuthority } from './utils/createAuthorities'
 import { createAccount } from './utils/createAccount'
 
-async function main() {
-  // Step 0: Connect to CORD blockchain
-  // Please make sure you are running the CORD locally
+function getChallenge(): string {
+  return Cord.Utils.UUID.generate()
+}
 
-  const networkAddress = 'ws://127.0.0.1:9944'
+async function main() {
+  //const networkAddress = 'ws://127.0.0.1:9944'
+  const networkAddress = 'wss://staging.cord.network'
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
 
@@ -29,39 +36,27 @@ async function main() {
   // Setup transaction author account - CORD Account.
 
   console.log(`\n❄️  New Authority`)
-
-  // Setup an authority account.
   const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
     '//Alice',
     'sr25519'
   )
-  console.log('👨🏻‍✈️  Authority Identity:', authorityAuthorIdentity.address)
-
-  // Setup author authority account.
-  const { account: authorIdentity } = await createAccount()
-  console.log(`🏦  Author (${authorIdentity.type}): ${authorIdentity.address}`)
-  await addAuthority(authorityAuthorIdentity, authorIdentity.address)
-  console.log(`🔏  Author permissions updated`)
-  await getChainCredits(authorityAuthorIdentity, authorIdentity.address, 5)
-  console.log(`💸  Author endowed with credits`)
-  console.log('✅  Authority created!')
-
+  console.log("Alice (AuthorIdentity for this run): ", authorityAuthorIdentity.address);
+  
   // Step 2: Setup Identities
   console.log(`\n❄️  Demo Identities (KeyRing)`)
 
-  // Creating the DIDs for the different parties involved in the demo.
+  /* Creating the DIDs for the different parties involved in the demo. */
   // Create Verifier DID
   const { mnemonic: verifierMnemonic, document: verifierDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const verifierKeys = generateKeypairs(verifierMnemonic)
-
   console.log(
     `🏢  Verifier (${verifierDid.assertionMethod![0].type}): ${verifierDid.uri}`
   )
   // Create Holder DID
   const { mnemonic: holderMnemonic, document: holderDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const holderKeys = generateKeypairs(holderMnemonic)
   console.log(
@@ -69,7 +64,7 @@ async function main() {
   )
   // Create issuer DID
   const { mnemonic: issuerMnemonic, document: issuerDid } = await createDid(
-    authorIdentity
+    authorityAuthorIdentity
   )
   const issuerKeys = generateKeypairs(issuerMnemonic)
   console.log(
@@ -85,7 +80,7 @@ async function main() {
   })
   // Create Delegate One DID
   const { mnemonic: delegateOneMnemonic, document: delegateOneDid } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegateOneKeys = generateKeypairs(delegateOneMnemonic)
   console.log(
     `🏛   Delegate (${delegateOneDid?.assertionMethod![0].type}): ${
@@ -94,7 +89,7 @@ async function main() {
   )
   // Create Delegate Two DID
   const { mnemonic: delegateTwoMnemonic, document: delegateTwoDid } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegateTwoKeys = generateKeypairs(delegateTwoMnemonic)
   console.log(
     `🏛   Delegate (${delegateTwoDid?.assertionMethod![0].type}): ${
@@ -103,7 +98,7 @@ async function main() {
   )
   // Create Delegate 3 DID
   const { mnemonic: delegate3Mnemonic, document: delegate3Did } =
-    await createDid(authorIdentity)
+    await createDid(authorityAuthorIdentity)
   const delegate3Keys = generateKeypairs(delegate3Mnemonic)
   console.log(
     `🏛   Delegate (${delegate3Did?.assertionMethod![0].type}): ${
@@ -118,7 +113,7 @@ async function main() {
 
   await createDidName(
     issuerDid.uri,
-    authorIdentity,
+    authorityAuthorIdentity,
     randomDidName,
     async ({ data }) => ({
       signature: issuerKeys.authentication.sign(data),
@@ -131,7 +126,7 @@ async function main() {
   // Step 2: Create a new Schema
   console.log(`\n❄️  Schema Creation `)
   const schema = await ensureStoredSchema(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     async ({ data }) => ({
       signature: issuerKeys.assertionMethod.sign(data),
@@ -147,7 +142,7 @@ async function main() {
   // Step 3: Create a new Registry
   console.log(`\n❄️  Registry Creation `)
   const registry = await ensureStoredRegistry(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     schema['$id'],
     async ({ data }) => ({
@@ -164,7 +159,7 @@ async function main() {
   // Step 4: Add Delelegate One as Registry Admin
   console.log(`\n❄️  Registry Admin Delegate Authorization `)
   const registryAuthority = await addRegistryAdminDelegate(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     registry['identifier'],
     delegateOneDid.uri,
@@ -178,7 +173,7 @@ async function main() {
   // Step 4: Add Delelegate Two as Registry Delegate
   console.log(`\n❄️  Registry Delegate Authorization `)
   const registryDelegate = await addRegistryDelegate(
-    authorIdentity,
+    authorityAuthorIdentity,
     issuerDid.uri,
     registry['identifier'],
     delegateTwoDid.uri,
@@ -209,7 +204,7 @@ async function main() {
   })
   await createStatement(
     delegateTwoDid.uri,
-    authorIdentity,
+    authorityAuthorIdentity,
     async ({ data }) => ({
       signature: delegateTwoKeys.assertionMethod.sign(data),
       keyType: delegateTwoKeys.assertionMethod.type,
@@ -218,74 +213,87 @@ async function main() {
   )
   console.log('✅ Credential created!')
 
-  //  Step 7: Credential exchange via messaging
-  console.log(`\n\n📩 Credential Exchange - Selective Disclosure (Verifier)`)
-  console.log(`🔑 Verifier Address: ${verifierKeys.authentication.address}`)
-  const msgChallenge = UUID.generate()
-  let trustedIssuers: any = []
-  let requiredProperties: any = []
-  trustedIssuers.push(verifierDid.uri)
-  requiredProperties.push('name')
-  const requestCredentialContent = {
-    schemaId: schema.$id,
-    trustedIssuers: trustedIssuers,
-    requiredProperties: requiredProperties,
-  }
-  let requestBodyContent = {
-    schemas: { ...requestCredentialContent },
-    challenge: msgChallenge,
-  }
-  const messageBodyForHolder: Cord.IRequestCredential = {
-    type: 'request-credential-document',
-    content: { requestBodyContent },
-  }
-  const messageForHolder = Cord.Message.fromBody(
-    messageBodyForHolder,
-    verifierDid.uri,
-    holderDid.uri
+  // Step 5: Create a Presentation
+  console.log(`\n❄️  Presentation Creation `)
+  const challenge = getChallenge()
+  const presentation = await createPresentation(
+    document,
+    async ({ data }) => ({
+      signature: holderKeys.authentication.sign(data),
+      keyType: holderKeys.authentication.type,
+      keyUri: `${holderDid.uri}${holderDid.authentication[0].id}`,
+    }),
+    ['name', 'id'],
+    challenge
   )
-  console.log(`\n📧 Selective Disclosure Request`)
-  console.dir(messageForHolder, { depth: null, colors: true })
+  console.dir(presentation, {
+    depth: null,
+    colors: true,
+  })
+  console.log('✅ Presentation created!')
 
-  console.log(`\n\n📩 Credential Exchange - Selective Disclosure (Holder)`)
-  let typeOfRequest: string = messageForHolder.body.type
-  let challaenge: any = msgChallenge
-  let requestor: any = verifierDid
-  let holder: any = holderDid
-  if (typeOfRequest == 'request-credential-document') {
-    console.log('\n💬 Prearing the message for verifier...\n')
-    const presentation = await createPresentation(
-      document,
-      async ({ data }) => ({
-        signature: holderKeys.authentication.sign(data),
-        keyType: holderKeys.authentication.type,
-        keyUri: `${holderDid.uri}${holderDid.authentication[0].id}`,
-      }),
-      ['name'],
-      challaenge
-    )
+  // Step 6: The verifier checks the presentation.
+  console.log(`\n❄️  Presentation Verification - ${presentation.identifier} `)
+  const isValid = await verifyPresentation(presentation, {
+    challenge: challenge,
+    trustedIssuerUris: [delegateTwoDid.uri],
+  })
 
-    let iSubmitCredentialDocumentArray: any = []
-    iSubmitCredentialDocumentArray.push(presentation)
-
-    const messageBodyForRequestor: Cord.ISubmitCredentialDocument = {
-      type: 'submit-credential-document',
-      content: iSubmitCredentialDocumentArray,
-    }
-    const messageForRequestor = Cord.Message.fromBody(
-      messageBodyForRequestor,
-      holder.uri,
-      requestor.uri
-    )
-
-    console.log(`\n📧 Selective Disclosure Response`)
-    console.dir(messageForRequestor, { depth: null, colors: true })
-    console.log(`\n❄️  Verifiy Presentation`)
+  if (isValid) {
+    console.log('✅ Verification successful! 🎉')
   } else {
-    console.log('Request type error!')
+    console.log('✅ Verification failed! 🚫')
+  }
+
+  console.log(`\n❄️  Messaging `)
+  const schemaId = Cord.Schema.idToChain(schema.$id)
+  console.log(' Generating the message - Sender -> Receiver')
+  const message = await generateRequestCredentialMessage(
+    holderDid.uri,
+    verifierDid.uri,
+    schemaId
+  )
+
+  console.log(' Encrypting the message - Sender -> Receiver')
+  const encryptedMessage = await encryptMessage(
+    message,
+    holderDid.uri,
+    verifierDid.uri,
+    holderKeys.keyAgreement
+  )
+
+  console.log(' Decrypting the message - Receiver')
+  await decryptMessage(encryptedMessage, verifierKeys.keyAgreement)
+
+  // Step 7: Revoke a Credential
+  console.log(`\n❄️  Revoke credential - ${document.identifier}`)
+  await revokeCredential(
+    delegateTwoDid.uri,
+    authorityAuthorIdentity,
+    async ({ data }) => ({
+      signature: delegateTwoKeys.assertionMethod.sign(data),
+      keyType: delegateTwoKeys.assertionMethod.type,
+    }),
+    document,
+    false
+  )
+  console.log(`✅ Credential revoked!`)
+
+  // Step 8: The verifier checks the presentation.
+  console.log(
+    `\n❄️  Presentation Verification (should fail) - ${presentation.identifier} `
+  )
+  const isAgainValid = await verifyPresentation(presentation, {
+    challenge: challenge,
+    trustedIssuerUris: [issuerDid.uri],
+  })
+
+  if (isAgainValid) {
+    console.log('✅ Verification successful! 🎉')
+  } else {
+    console.log('✅ Verification failed! 🚫')
   }
 }
-
 main()
   .then(() => console.log('\nBye! 👋 👋 👋 '))
   .finally(Cord.disconnect)
