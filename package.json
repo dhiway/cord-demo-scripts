@@ -9,13 +9,14 @@
     "demo-messaging": "tsx --no-cache src/demo-messaging.ts",
     "demo-score": "tsx --no-cache src/demo-score.ts",
     "start": "tsc src/start.ts",
-    "demo-sparknet": "tsx --no-cache demo/src/demo-sparknet.ts",
+    "demo-sparknet": "tsx --no-cache src/demo-sparknet.ts",
     "create-custom-schema": "tsx --no-cache demo/src/create-custom-schema",
     "bench": "tsx demo/src/bench.ts",
     "stream-bench": "tsx --no-cache demo/src/stream-bench"
   },
   "dependencies": {
-    "@cord.network/sdk": "^0.8.0-3"
+    "@cord.network/sdk": "0.9.0-confidex1",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "moment": "^2.29.1",

@@ -1,212 +1,227 @@
-import * as Cord from '@cord.network/sdk'
-import { UUID, Crypto } from '@cord.network/utils'
-import { generateKeypairs } from './utils/generateKeypairs'
-import { createDid } from './utils/generateDid'
-import { createDidName } from './utils/generateDidName'
-import { getDidDocFromName } from './utils/queryDidName'
-import { ensureStoredSchema } from './utils/generateSchema'
+import * as Cord from "@cord.network/sdk";
+import { UUID, Crypto } from "@cord.network/utils";
+import { generateKeypairs } from "./utils/generateKeypairs";
+import { createDid } from "./utils/generateDid";
+import { createDidName } from "./utils/generateDidName";
+import { getDidDocFromName } from "./utils/queryDidName";
+import { ensureStoredSchema } from "./utils/generateSchema";
 import {
   ensureStoredRegistry,
   addRegistryAdminDelegate,
   addRegistryDelegate,
-} from './utils/generateRegistry'
-import { createDocument } from './utils/createDocument'
-import { createPresentation } from './utils/createPresentation'
-import { createStream } from './utils/createStream'
-import { verifyPresentation } from './utils/verifyPresentation'
-import { revokeCredential } from './utils/revokeCredential'
-import { randomUUID } from 'crypto'
-import { decryptMessage } from './utils/decrypt_message'
-import { encryptMessage } from './utils/encrypt_message'
-import { generateRequestCredentialMessage } from './utils/request_credential_message'
-import { getChainCredits, addAuthority } from './utils/createAuthorities'
-import { createAccount } from './utils/createAccount'
-const { NETWORK_ADDRESS, ANCHOR_URI, DID_NAME } = process.env
-function getChallenge(): string {
-  return Cord.Utils.UUID.generate()
-}
+} from "./utils/generateRegistry";
+import { createDocument } from "./utils/createDocument";
+import { createPresentation } from "./utils/createPresentation";
+import { createStatement } from "./utils/createStatement";
+import { verifyPresentation } from "./utils/verifyPresentation";
+import { revokeCredential } from "./utils/revokeCredential";
+import { randomUUID } from "crypto";
+import { addAuthority } from "./utils/createAuthorities";
+import { createAccount } from "./utils/createAccount";
+import { updateStatement } from "./utils/updateDocument";
+import {
+  requestJudgement,
+  setIdentity,
+  setRegistrar,
+  provideJudgement,
+} from "./utils/createRegistrar";
+import "dotenv/config";
+// import type {
+//   SignCallback,
+//   // DocumenentMetaData,
+// } from '@cord.network/types'
 
-const timeoutId = setTimeout(() => {
-  console.log("\nTime out. Bye! ⏰ ⏰ ⏰ ")
-  Cord.disconnect()
-  process.exit(1)
-}, 120000)
+function getChallenge(): string {
+  return Cord.Utils.UUID.generate();
+}
+const { NETWORK_ADDRESS, ANCHOR_URI } = process.env;
 
 async function main() {
+  const networkAddress = NETWORK_ADDRESS ?? "ws://127.0.0.1:9944";
+  const anchorUri = ANCHOR_URI ?? "//Alice";
+  // Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK });
+  await Cord.connect(networkAddress);
 
-  const networkAddress = NETWORK_ADDRESS ?? 'wss://sparknet.cord.network'
-  const didName = DID_NAME ?? `infinite.sentinel`
-  const anchorUri = ANCHOR_URI ?? '//Sparknet//1//Demo'
-  Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
-  await Cord.connect(networkAddress)
-
-  // Step 1: Setup Authority
+  // Step 1: Setup Membership
   // Setup transaction author account - CORD Account.
-
-  console.log(`\n❄️  Creating a new Authority`)
-  const authorityIdentity = Crypto.makeKeypairFromUri(
+  console.log(`\n❄️  New Network Member`);
+  const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
     anchorUri,
-    'sr25519'
-  )
-  let authorityAuthorIdentity : Cord.CordKeyringPair
-  if(anchorUri == '//Alice'){
-    const { account: authorIdentity } = await createAccount()
-    console.log(`🏦  Author for this run(${authorIdentity.type}): ${authorIdentity.address}`)
-    await addAuthority(authorityIdentity, authorIdentity.address)
-    console.log(`🔏  Author permissions updated`)
-    await getChainCredits(authorityIdentity, authorIdentity.address, 5)
-    console.log(`💸  Author endowed with credits`)
-    authorityAuthorIdentity= authorIdentity
-    console.log('✅ Authority created!')
-  }
-  else{
-    authorityAuthorIdentity = authorityIdentity
-    console.log("AuthorIdentity for this run: ", authorityAuthorIdentity.address);
-  }
+    "sr25519"
+  );
+  let authorIdentity;
+  if (NETWORK_ADDRESS === "ws://127.0.0.1:9944") {
+    // Setup network authority account.
+    const { account: authorityIdentity } = await createAccount();
+    console.log(
+      `🏦  Member (${authorityIdentity.type}): ${authorityIdentity.address}`
+    );
+    await addAuthority(authorityAuthorIdentity, authorityIdentity.address);
+    await setRegistrar(authorityAuthorIdentity, authorityIdentity.address);
+    console.log("✅ Network Authority created!");
 
+    // Setup network member account.
+    const { account: authorIdentity } = await createAccount();
+    console.log(
+      `🏦  Member (${authorIdentity.type}): ${authorIdentity.address}`
+    );
+    await addAuthority(authorityAuthorIdentity, authorIdentity.address);
+    console.log(`🔏  Member permissions updated`);
+    await setIdentity(authorIdentity);
+    console.log(`🔏  Member identity info updated`);
+    await requestJudgement(authorIdentity, authorityIdentity.address);
+    console.log(`🔏  Member identity judgement requested`);
+    await provideJudgement(authorityIdentity, authorIdentity.address);
+    console.log(`🔏  Member identity judgement provided`);
+    console.log("✅ Network Member added!");
+  } else {
+    authorIdentity = authorityAuthorIdentity;
+  }
   // Step 2: Setup Identities
-  console.log(`\n❄️  Demo Identities (KeyRing)`)
+  console.log(`\n❄️  Demo Identities (KeyRing)`);
+
   /* Creating the DIDs for the different parties involved in the demo. */
   // Create Verifier DID
   const { mnemonic: verifierMnemonic, document: verifierDid } = await createDid(
-    authorityAuthorIdentity
-  )
-  const verifierKeys = generateKeypairs(verifierMnemonic)
+    authorIdentity
+  );
+  const verifierKeys = generateKeypairs(verifierMnemonic);
   console.log(
     `🏢  Verifier (${verifierDid.assertionMethod![0].type}): ${verifierDid.uri}`
-  )
+  );
   // Create Holder DID
   const { mnemonic: holderMnemonic, document: holderDid } = await createDid(
-    authorityAuthorIdentity
-  )
-  const holderKeys = generateKeypairs(holderMnemonic)
+    authorIdentity
+  );
+  const holderKeys = generateKeypairs(holderMnemonic);
   console.log(
     `👩‍⚕️  Holder (${holderDid.assertionMethod![0].type}): ${holderDid.uri}`
-  )
+  );
   // Create issuer DID
   const { mnemonic: issuerMnemonic, document: issuerDid } = await createDid(
-    authorityAuthorIdentity
-  )
-  const issuerKeys = generateKeypairs(issuerMnemonic)
+    authorIdentity
+  );
+  const issuerKeys = generateKeypairs(issuerMnemonic);
   console.log(
     `🏛   Issuer (${issuerDid?.assertionMethod![0].type}): ${issuerDid.uri}`
-  )
+  );
   const conformingDidDocument = Cord.Did.exportToDidDocument(
     issuerDid,
-    'application/json'
-  )
+    "application/json"
+  );
   console.dir(conformingDidDocument, {
     depth: null,
     colors: true,
-  })
+  });
   // Create Delegate One DID
   const { mnemonic: delegateOneMnemonic, document: delegateOneDid } =
-    await createDid(authorityAuthorIdentity)
-  const delegateOneKeys = generateKeypairs(delegateOneMnemonic)
+    await createDid(authorIdentity);
+  const delegateOneKeys = generateKeypairs(delegateOneMnemonic);
   console.log(
     `🏛   Delegate (${delegateOneDid?.assertionMethod![0].type}): ${
       delegateOneDid.uri
     }`
-  )
+  );
   // Create Delegate Two DID
   const { mnemonic: delegateTwoMnemonic, document: delegateTwoDid } =
-    await createDid(authorityAuthorIdentity)
-  const delegateTwoKeys = generateKeypairs(delegateTwoMnemonic)
+    await createDid(authorIdentity);
+  const delegateTwoKeys = generateKeypairs(delegateTwoMnemonic);
   console.log(
     `🏛   Delegate (${delegateTwoDid?.assertionMethod![0].type}): ${
       delegateTwoDid.uri
     }`
-  )
+  );
   // Create Delegate 3 DID
   const { mnemonic: delegate3Mnemonic, document: delegate3Did } =
-    await createDid(authorityAuthorIdentity)
-  const delegate3Keys = generateKeypairs(delegate3Mnemonic)
+    await createDid(authorIdentity);
+  const delegate3Keys = generateKeypairs(delegate3Mnemonic);
   console.log(
     `🏛   Delegate (${delegate3Did?.assertionMethod![0].type}): ${
       delegate3Did.uri
     }`
-  )
-  console.log('✅ Identities created!')
+  );
+  console.log("✅ Identities created!");
 
   // Step 2: Create a DID name for Issuer
-  console.log(`\n❄️  DID name Creation `)
-  const randomDidName = `${didName}.${randomUUID().substring(0, 8)}@cord`
-  
+  console.log(`\n❄️  DID name Creation `);
+  const randomDidName = `solar.sailer.${randomUUID().substring(0, 4)}@cord`;
+
   await createDidName(
     issuerDid.uri,
-    authorityAuthorIdentity,
+    authorIdentity,
     randomDidName,
     async ({ data }) => ({
       signature: issuerKeys.authentication.sign(data),
       keyType: issuerKeys.authentication.type,
     })
-  )
-  console.log(`✅ DID name - ${randomDidName} - created!`)
-  await getDidDocFromName(randomDidName)
+  );
+  console.log(`✅ DID name - ${randomDidName} - created!`);
+  await getDidDocFromName(randomDidName);
 
   // Step 2: Create a new Schema
-  console.log(`\n❄️  Schema Creation `)
+  console.log(`\n❄️  Schema Creation `);
   const schema = await ensureStoredSchema(
-    authorityAuthorIdentity,
+    authorIdentity,
     issuerDid.uri,
     async ({ data }) => ({
       signature: issuerKeys.assertionMethod.sign(data),
       keyType: issuerKeys.assertionMethod.type,
     })
-  )
+  );
   console.dir(schema, {
     depth: null,
     colors: true,
-  })
-  console.log('✅ Schema created!')
+  });
+  console.log("✅ Schema created!");
 
   // Step 3: Create a new Registry
-  console.log(`\n❄️  Registry Creation `)
+  console.log(`\n❄️  Registry Creation `);
   const registry = await ensureStoredRegistry(
-    authorityAuthorIdentity,
+    authorIdentity,
     issuerDid.uri,
-    schema['$id'],
+    schema["$id"],
     async ({ data }) => ({
       signature: issuerKeys.assertionMethod.sign(data),
       keyType: issuerKeys.assertionMethod.type,
     })
-  )
+  );
   console.dir(registry, {
     depth: null,
     colors: true,
-  })
-  console.log('✅ Registry created!')
+  });
+  console.log("✅ Registry created!");
 
   // Step 4: Add Delelegate One as Registry Admin
-  console.log(`\n❄️  Registry Admin Delegate Authorization `)
+  console.log(`\n❄️  Registry Admin Delegate Authorization `);
   const registryAuthority = await addRegistryAdminDelegate(
-    authorityAuthorIdentity,
+    authorIdentity,
     issuerDid.uri,
-    registry['identifier'],
+    registry["identifier"],
     delegateOneDid.uri,
     async ({ data }) => ({
       signature: issuerKeys.capabilityDelegation.sign(data),
       keyType: issuerKeys.capabilityDelegation.type,
     })
-  )
-  console.log(`✅ Registry Authorization - ${registryAuthority} - created!`)
+  );
+  console.log(`✅ Registry Authorization - ${registryAuthority} - created!`);
 
   // Step 4: Add Delelegate Two as Registry Delegate
-  console.log(`\n❄️  Registry Delegate Authorization `)
+  console.log(`\n❄️  Registry Delegate Authorization `);
   const registryDelegate = await addRegistryDelegate(
-    authorityAuthorIdentity,
+    authorIdentity,
     issuerDid.uri,
-    registry['identifier'],
+    registry["identifier"],
     delegateTwoDid.uri,
     async ({ data }) => ({
       signature: issuerKeys.capabilityDelegation.sign(data),
       keyType: issuerKeys.capabilityDelegation.type,
     })
-  )
-  console.log(`✅ Registry Delegation - ${registryDelegate} - created!`)
+  );
+  console.log(`✅ Registry Delegation - ${registryDelegate} - created!`);
 
   // Step 4: Delegate creates a new Verifiable Document
-  console.log(`\n❄️  Verifiable Document Creation `)
+  console.log(`\n❄️  Verifiable Document Creation `);
+
   const document = await createDocument(
     holderDid.uri,
     delegateTwoDid.uri,
@@ -218,111 +233,152 @@ async function main() {
       keyType: delegateTwoKeys.authentication.type,
       keyUri: `${delegateTwoDid.uri}${delegateTwoDid.authentication[0].id}`,
     })
-  )
+  );
   console.dir(document, {
     depth: null,
     colors: true,
-  })
-  await createStream(
+  });
+  await createStatement(
     delegateTwoDid.uri,
-    authorityAuthorIdentity,
+    authorIdentity,
     async ({ data }) => ({
       signature: delegateTwoKeys.assertionMethod.sign(data),
       keyType: delegateTwoKeys.assertionMethod.type,
     }),
     document
-  )
-  console.log('✅ Credential created!')
+  );
+  console.log("✅ Credential created!");
 
-  // Step 5: Create a Presentation
-  console.log(`\n❄️  Presentation Creation `)
-  const challenge = getChallenge()
-  const presentation = await createPresentation(
+  // Step 5: Delegate updates the Verifiable Document
+  console.log("\n🖍️ Statement update...\n");
+
+  let updatedContent: Cord.IContent = {
+    name: "Adi",
+    age: 23,
+    id: "123456789987654321",
+    gender: "Male",
+    country: "India",
+    address: {
+      street: "a",
+      pin: 54032,
+      location: {
+        state: "karnataka",
+        country: "india",
+      },
+    },
+  };
+
+  console.log("𝌞 Updated content\n", updatedContent);
+
+  const updatedDocument = await updateStatement(
     document,
+    updatedContent,
+    schema,
     async ({ data }) => ({
+      signature: delegateTwoKeys.authentication.sign(data),
+      keyType: delegateTwoKeys.authentication.type,
+      keyUri: `${delegateTwoDid.uri}${delegateTwoDid.authentication[0].id}`,
+    }),
+    delegateTwoDid.uri,
+    authorIdentity,
+    delegateTwoKeys
+  );
+
+  console.log("\n✅ Document updated!");
+  console.log("\nUpdated document: \n", updatedDocument);
+
+  // Step 6: Create a Presentation
+  console.log(`\n❄️  Selective Disclosure Presentation Creation `);
+  const challenge = getChallenge();
+  const presentation = await createPresentation({
+    document: updatedDocument,
+    signCallback: async ({ data }) => ({
       signature: holderKeys.authentication.sign(data),
       keyType: holderKeys.authentication.type,
       keyUri: `${holderDid.uri}${holderDid.authentication[0].id}`,
     }),
-    ['name', 'id'],
-    challenge
-  )
+    // Comment the below line to have a full disclosure
+    selectedAttributes: ["name", "id", "address.pin", "address.location"],
+    challenge: challenge,
+  });
+
   console.dir(presentation, {
     depth: null,
     colors: true,
-  })
-  console.log('✅ Presentation created!')
+  });
+  console.log("✅ Presentation created!");
 
-  // Step 6: The verifier checks the presentation.
-  console.log(`\n❄️  Presentation Verification - ${presentation.identifier} `)
+  // Step 7: The verifier checks the presentation.
+  console.log(`\n❄️  Presentation Verification - ${presentation.identifier} `);
   const isValid = await verifyPresentation(presentation, {
     challenge: challenge,
     trustedIssuerUris: [delegateTwoDid.uri],
-  })
+  });
 
   if (isValid) {
-    console.log('✅ Verification successful! 🎉')
+    console.log("✅  Verification successful! 🎉");
   } else {
-    console.log('✅ Verification failed! 🚫')
+    console.log("✅  Verification failed! 🚫");
   }
 
-  console.log(`\n❄️  Messaging `)
-  const schemaId = Cord.Schema.idToChain(schema.$id)
-  console.log(' Generating the message - Sender -> Receiver')
-  const message = await generateRequestCredentialMessage(
-    holderDid.uri,
-    verifierDid.uri,
-    schemaId
-  )
+  // Uncomment the following section to enable messaging demo
+  //
+  // console.log(`\n❄️  Messaging `)
+  // const schemaId = Cord.Schema.idToChain(schema.$id)
+  // console.log(' Generating the message - Sender -> Receiver')
+  // const message = await generateRequestCredentialMessage(
+  //   holderDid.uri,
+  //   verifierDid.uri,
+  //   schemaId
+  // )
+  //
+  // console.log(' Encrypting the message - Sender -> Receiver')
+  // const encryptedMessage = await encryptMessage(
+  //   message,
+  //   holderDid.uri,
+  //   verifierDid.uri,
+  //   holderKeys.keyAgreement
+  // )
+  //
+  // console.log(' Decrypting the message - Receiver')
+  // await decryptMessage(encryptedMessage, verifierKeys.keyAgreement)
 
-  console.log(' Encrypting the message - Sender -> Receiver')
-  const encryptedMessage = await encryptMessage(
-    message,
-    holderDid.uri,
-    verifierDid.uri,
-    holderKeys.keyAgreement
-  )
-
-  console.log(' Decrypting the message - Receiver')
-  await decryptMessage(encryptedMessage, verifierKeys.keyAgreement)
-
-  // Step 7: Revoke a Credential
-  console.log(`\n❄️  Revoke credential - ${document.identifier}`)
+  // Step 8: Revoke a Credential
+  console.log(`\n❄️  Revoke credential - ${updatedDocument.identifier}`);
   await revokeCredential(
     delegateTwoDid.uri,
-    authorityAuthorIdentity,
+    authorIdentity,
     async ({ data }) => ({
       signature: delegateTwoKeys.assertionMethod.sign(data),
       keyType: delegateTwoKeys.assertionMethod.type,
     }),
-    document,
+    updatedDocument,
     false
-  )
-  console.log(`✅ Credential revoked!`)
+  );
+  console.log(`✅ Credential revoked!`);
 
-  // Step 8: The verifier checks the presentation.
+  // Step 9: The verifier checks the presentation.
   console.log(
-    `\n❄️  Presentation Verification (should fail) - ${presentation.identifier} `
-  )
+    // `\n❄️  Presentation Verification (should fail) - ${presentation.identifier} `
+    `\n❄️  Presentation Verification - ${presentation.identifier} `
+  );
   const isAgainValid = await verifyPresentation(presentation, {
     challenge: challenge,
     trustedIssuerUris: [issuerDid.uri],
-  })
+  });
 
   if (isAgainValid) {
-    console.log('✅ Verification successful! 🎉')
+    console.log("✅ Verification successful! 🎉");
   } else {
-    console.log('✅ Verification failed! 🚫')
+    console.log("✅ Verification failed! 🚫");
   }
-  
 }
-
 main()
-  .then(() => {console.log('\nBye! 👋 👋 👋 '),clearTimeout(timeoutId)})
-  .finally(Cord.disconnect)
+  .then(() => console.log("\nBye! 👋 👋 👋 "))
+  .finally(Cord.disconnect);
 
-process.on('SIGINT', async () => {
-  console.log('\nBye! 👋 👋 👋 \n')
-  Cord.disconnect()
-  process.exit(0)
-})
+process.on("SIGINT", async () => {
+  console.log("\nBye! 👋 👋 👋 \n");
+  Cord.disconnect();
+  process.exit(0);
+});
