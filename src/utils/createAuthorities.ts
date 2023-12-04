@@ -54,13 +54,13 @@ export async function getChainCredits(
  * @param authorAccount - The account that will be used to sign the transaction.
  * @param authority - The address of the authority to add.
  */
-export async function addAuthority(
+export async function addNetworkMember(
   authorAccount: Cord.KeyringPair,
   authority: Cord.CordAddress
 ) {
   const api = Cord.ConfigService.get('api')
 
-  const callTx = api.tx.extrinsicAuthorship.add([authority])
+  const callTx = api.tx.networkMembership.nominate(authority, false)
 
   const sudoTx = await api.tx.sudo.sudo(callTx)
 

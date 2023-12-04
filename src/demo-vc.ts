@@ -13,7 +13,7 @@ import {
 } from './utils/generateRegistry'
 import { createDocument } from './utils/createDocument'
 import { createPresentation } from './utils/createPresentation'
-import { createStream } from './utils/createStream'
+import { createStatement } from './utils/createStatement'
 import { verifyPresentation } from './utils/verifyPresentation'
 import { revokeCredential } from './utils/revokeCredential'
 import { randomUUID } from 'crypto'
@@ -33,22 +33,20 @@ async function main() {
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
 
-  // Step 1: Setup Authority
+  // Step 1: Setup Membership
   // Setup transaction author account - CORD Account.
 
-  console.log(`\n❄️  New Authority`)
+  console.log(`\n❄️  New Network Member`)
   const authorityAuthorIdentity = Crypto.makeKeypairFromUri(
     '//Alice',
     'sr25519'
   )
-  // Setup author authority account.
+  // Setup network member account.
   const { account: authorIdentity } = await createAccount()
-  console.log(`🏦  Author (${authorIdentity.type}): ${authorIdentity.address}`)
+  console.log(`🏦  Member (${authorIdentity.type}): ${authorIdentity.address}`)
   await addAuthority(authorityAuthorIdentity, authorIdentity.address)
-  console.log(`🔏  Author permissions updated`)
-  await getChainCredits(authorityAuthorIdentity, authorIdentity.address, 5)
-  console.log(`💸  Author endowed with credits`)
-  console.log('✅ Authority created!')
+  console.log(`🔏  Member permissions updated`)
+  console.log('✅ Network Member added!')
 
   // Step 2: Setup Identities
   console.log(`\n❄️  Demo Identities (KeyRing)`)
@@ -210,7 +208,7 @@ async function main() {
     depth: null,
     colors: true,
   })
-  await createStream(
+  await createStatement(
     delegateTwoDid.uri,
     authorIdentity,
     async ({ data }) => ({
@@ -247,11 +245,11 @@ async function main() {
   const VCfromPresentation =
     vcPresentation.verifiableCredential as VerifiableCredential
 
-  const streamResult = await VCUtils.verification.verifyStreamProof(
+  const statementResult = await VCUtils.verification.verifyStatementProof(
     VCfromPresentation,
     VCfromPresentation.proof[1]
   )
-  //console.log("\n: VC Proof(1): ", VCfromPresentation.proof[1], streamResult)
+  //console.log("\n: VC Proof(1): ", VCfromPresentation.proof[1], statementResult)
 
   const selfSignatureResult =
     await VCUtils.verification.verifySelfSignatureProof(
@@ -259,38 +257,38 @@ async function main() {
       vcPresentation.proof[0],
       vcChallenge
     )
-    //console.log("\n: VP Proof: ", vcPresentation.proof, vcChallenge, selfSignatureResult)
+  //console.log("\n: VP Proof: ", vcPresentation.proof, vcChallenge, selfSignatureResult)
 
-    const digestResult = await VCUtils.verification.verifyCredentialDigestProof(
-      VCfromPresentation,
-      VCfromPresentation.proof[2]
-    )
-    //console.log("\n: VC Proof(2): ", VCfromPresentation.proof[2], digestResult)
-    
-  const streamSignatureResult =
-    await VCUtils.verification.verifyStreamSignatureProof(
+  const digestResult = await VCUtils.verification.verifyCredentialDigestProof(
+    VCfromPresentation,
+    VCfromPresentation.proof[2]
+  )
+  //console.log("\n: VC Proof(2): ", VCfromPresentation.proof[2], digestResult)
+
+  const statementSignatureResult =
+    await VCUtils.verification.verifyStatementSignatureProof(
       VCfromPresentation,
       VCfromPresentation.proof[0]
     )
 
-  //console.log("\n: VC Proof(0): ", VCfromPresentation.proof[0], streamSignatureResult)
-  
+  //console.log("\n: VC Proof(0): ", VCfromPresentation.proof[0], statementSignatureResult)
+
   if (
-    streamResult &&
-    streamResult['verified'] &&
+    statementResult &&
+    statementResult['verified'] &&
     digestResult &&
     digestResult['verified'] &&
-    streamSignatureResult &&
-    streamSignatureResult['verified'] &&
+    statementSignatureResult &&
+    statementSignatureResult['verified'] &&
     selfSignatureResult &&
     selfSignatureResult['verified']
   ) {
     console.log(
       '✅',
-      'Stream-Signature-Proof',
-      streamSignatureResult['verified'],
-      '✧ Stream-Proof',
-      streamResult['verified'],
+      'Statement-Signature-Proof',
+      statementSignatureResult['verified'],
+      '✧ Statement-Proof',
+      statementResult['verified'],
       '✧ Digest-Proof',
       digestResult['verified'],
       '✧ Self-Signature-Proof',
@@ -299,10 +297,10 @@ async function main() {
   } else {
     console.log(
       `❌`,
-      'Stream-Signature-Proof',
-      streamSignatureResult['verified'],
-      '✧ Stream-Proof',
-      streamResult['verified'],
+      'Statement-Signature-Proof',
+      statementSignatureResult['verified'],
+      '✧ Statement-Proof',
+      statementResult['verified'],
       '✧ Digest-Proof',
       digestResult['verified'],
       '✧ Self-Signature-Proof',
@@ -324,11 +322,11 @@ async function main() {
   console.log(`✅ Credential revoked!`)
 
   /* Test VC & VP after revoke */
-  const streamResult1 = await VCUtils.verification.verifyStreamProof(
+  const statementResult1 = await VCUtils.verification.verifyStatementProof(
     VCfromPresentation,
     VCfromPresentation.proof[1]
   )
-  //console.log("\n: VC Proof(1): ", VCfromPresentation.proof[1], streamResult)
+  //console.log("\n: VC Proof(1): ", VCfromPresentation.proof[1], statementResult)
 
   const selfSignatureResult1 =
     await VCUtils.verification.verifySelfSignatureProof(
@@ -336,38 +334,38 @@ async function main() {
       vcPresentation.proof[0],
       vcChallenge
     )
-    //console.log("\n: VP Proof: ", vcPresentation.proof, vcChallenge, selfSignatureResult)
+  //console.log("\n: VP Proof: ", vcPresentation.proof, vcChallenge, selfSignatureResult)
 
-    const digestResult1 = await VCUtils.verification.verifyCredentialDigestProof(
-      VCfromPresentation,
-      VCfromPresentation.proof[2]
-    )
-    //console.log("\n: VC Proof(2): ", VCfromPresentation.proof[2], digestResult)
-    
-  const streamSignatureResult1 =
-    await VCUtils.verification.verifyStreamSignatureProof(
+  const digestResult1 = await VCUtils.verification.verifyCredentialDigestProof(
+    VCfromPresentation,
+    VCfromPresentation.proof[2]
+  )
+  //console.log("\n: VC Proof(2): ", VCfromPresentation.proof[2], digestResult)
+
+  const statementSignatureResult1 =
+    await VCUtils.verification.verifyStatementSignatureProof(
       VCfromPresentation,
       VCfromPresentation.proof[0]
     )
 
-  //console.log("\n: VC Proof(0): ", VCfromPresentation.proof[0], streamSignatureResult)
-  
+  //console.log("\n: VC Proof(0): ", VCfromPresentation.proof[0], statementSignatureResult)
+
   if (
-    streamResult1 &&
-    streamResult1['verified'] &&
+    statementResult1 &&
+    statementResult1['verified'] &&
     digestResult1 &&
     digestResult1['verified'] &&
-    streamSignatureResult1 &&
-    streamSignatureResult1['verified'] &&
+    statementSignatureResult1 &&
+    statementSignatureResult1['verified'] &&
     selfSignatureResult1 &&
     selfSignatureResult1['verified']
   ) {
     console.log(
       '✅',
-      'Stream-Signature-Proof',
-      streamSignatureResult1['verified'],
-      '✧ Stream-Proof',
-      streamResult1['verified'],
+      'Statement-Signature-Proof',
+      statementSignatureResult1['verified'],
+      '✧ Statement-Proof',
+      statementResult1['verified'],
       '✧ Digest-Proof',
       digestResult1['verified'],
       '✧ Self-Signature-Proof',
@@ -375,18 +373,17 @@ async function main() {
     )
   } else {
     console.log(
-      `❌`,
-      'Stream-Signature-Proof',
-      streamSignatureResult1['verified'],
-      '✧ Stream-Proof',
-      streamResult1,
+      `🚫`,
+      'Statement-Signature-Proof',
+      statementSignatureResult1['verified'],
+      '✧ Statement-Proof',
+      statementResult1['verified'],
       '✧ Digest-Proof',
       digestResult1['verified'],
       '✧ Self-Signature-Proof',
       selfSignatureResult1['verified']
     )
   }
-
 }
 
 main()
