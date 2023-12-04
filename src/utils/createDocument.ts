@@ -13,8 +13,7 @@ export async function createDocument(
   holder: Cord.DidUri,
   issuer: Cord.DidUri,
   schema: Cord.ISchema,
-  authorization: Cord.AuthorizationId,
-  registry: Cord.RegistryId,
+  chainSpace: Cord.SpaceId,
   signCallback: Cord.SignCallback
 ): Promise<Cord.IDocument> {
   const content = Cord.Content.fromSchemaAndContent(
@@ -23,17 +22,25 @@ export async function createDocument(
       name: 'Alice',
       age: 29,
       id: '123456789987654321',
-      gender: 'Female',
       country: 'India',
+      address: {
+        street: 'a',
+        pin: 54032,
+        location: {
+          state: 'Karnataka',
+          country: 'India',
+        },
+      },
     },
     holder,
     issuer
   )
+  console.log(content, chainSpace)
   const document = Cord.Document.fromContent({
     content,
-    authorization,
-    registry,
+    chainSpace,
     signCallback,
+    options: {},
   })
   return document
 }

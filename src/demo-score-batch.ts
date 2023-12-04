@@ -16,13 +16,8 @@ function getRandomFloat(min: number, max: number, decimals: number) {
   return parseFloat(str)
 }
 async function main() {
-  // localhost
-  // await Cord.init({ address: 'ws://127.0.0.1:9944' })
-  // const wsProvider = new WsProvider('ws://127.0.0.1:9944')
-  //staging
-  await Cord.init({ address: "wss://staging.cord.network" });
-  const wsProvider = new WsProvider('wss://staging.cord.network')
-  
+  await Cord.init({ address: 'ws://127.0.0.1:9944' })
+  const wsProvider = new WsProvider('ws://127.0.0.1:9944')
   const api = await ApiPromise.create({ provider: wsProvider })
 
   // Step 1: Setup Identities
@@ -58,7 +53,7 @@ async function main() {
   console.log(
     `🏢 Pool Author (${poolTransactionAuthor.signingKeyType}): ${poolTransactionAuthor.address}`
   )
-  let keyring = new Keyring({ type: 'sr25519', ss58Format: 29 })
+  let keyring = new Keyring({ type: 'sr25519' })
   let batchTransactionAuthor = keyring.addFromUri('//Charlie')
   console.log(
     `🏢 Batch Author (${keyring.type}): ${batchTransactionAuthor.address}`
@@ -80,7 +75,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.overall,
-      score: getRandomFloat(1.5, 4.5, 1),
+      score: getRandomFloat(1.5, 4.5, 2),
     }
 
     let newOverallPoolJournalEntry = Cord.Score.fromJournalProperties(
@@ -104,7 +99,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.delivery,
-      score: getRandomFloat(0.5, 3.5, 1),
+      score: getRandomFloat(0.5, 3.5, 2),
     }
     let newDeliveryPoolJournalEntry = Cord.Score.fromJournalProperties(
       deliveryPoolEntryContent,
@@ -153,7 +148,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.overall,
-      score: getRandomFloat(1.5, 4.5, 1),
+      score: getRandomFloat(1.5, 4.5, 2),
     }
 
     let newOverallJournalEntry = Cord.Score.fromJournalProperties(
@@ -175,7 +170,7 @@ async function main() {
       collector: collectorIdentity.address,
       requestor: requestorIdentity.address,
       scoreType: ScoreType.delivery,
-      score: getRandomFloat(0.5, 3.5, 1),
+      score: getRandomFloat(0.5, 3.5, 2),
     }
     let newDeliveryJournalEntry = Cord.Score.fromJournalProperties(
       deliveryEntryContent,
