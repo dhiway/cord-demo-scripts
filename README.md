@@ -18,13 +18,13 @@ sudo docker build -t <docker-image-name> .
   
 i) Run demo on sparknet node
 ```sh
-sudo docker run <docker-image-name> demo
+sudo docker run <docker-image-name> src/func-test.ts
 ```
   ii) Run demo on custom node
   ```sh 
-sudo docker run --env NETWORK_ADDRESS='<network-address>' --env ANCHOR_URI='<anchor-uri>' <docker-image-name> demo
+sudo docker run --env NETWORK_ADDRESS='<network-address>' --env ANCHOR_URI='<anchor-uri>' <docker-image-name> src/func-test.ts
 ```
-Example : `sudo docker run --env NETWORK_ADDRESS='ws://127.0.0.1:9944' --env ANCHOR_URI='//Alice' <docker-image-name> demo`
+Example : `sudo docker run --env NETWORK_ADDRESS='ws://host.docker.internal:9944' --env ANCHOR_URI='//Alice' <docker-image-name> src/func-test.ts`
 
   -  Here values of `NETWORK_ADDRESS` and `ANCHOR_URI` can be changed according to your use case.
 
@@ -39,9 +39,7 @@ Example : `sudo docker run --env NETWORK_ADDRESS='ws://127.0.0.1:9944' --env ANC
   - Note that this exposes ports 9933/9944/30333
   - You can watch the events and blocks finalization @ https://apps.cord.network/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer
 
-* Step 4: run the demo script with `yarn demo`. Understand whats happening by checking the code at `src/demo.ts`.
-
-* Step 5: run the VC (Verifiable Credential) demo script by running `yarn demo-vc`.
+* Step 4: run the demo script with `npx tsx src/func-test.ts`. Understand whats happening by checking the code at `src/func-test.ts`.
 
 
 ## How to run the demo code (with staging network)
@@ -52,18 +50,18 @@ Example : `sudo docker run --env NETWORK_ADDRESS='ws://127.0.0.1:9944' --env ANC
 
 * Step 3: You can watch the events and blocks finalization @ https://apps.cord.network/?rpc=wss%3A%2F%2Fstaging.cord.network#/explorer
 
-* Step 4: Open the demo file you want to run (eg., `src/demo.ts`) and change `ws://127.0.0.1:9944` to `wss://staging.cord.network`. Save the file.
+* Step 4: Open the demo file you want to run (eg., `src/func-test.ts`) and change `ws://127.0.0.1:9944` to `wss://staging.cord.network`. Save the file.
 
-* Step 5: run the demo script with `yarn demo`. Understand whats happening by checking the code at `src/demo.ts`.
+* Step 5: run the demo script with `npx tsx src/func-test.ts`. Understand whats happening by checking the code at `src/func-test.ts`.
 
-* Step 6: run the VC (Verifiable Credential) demo script by running `yarn demo-vc`.
+* Step 6: run the VC (Verifiable Credential) demo script by running `npx tsx src/func-test.ts`.
 
   - NOTE: The VerifiableCredential is a required form of output if your application wants to interact with other applications. If one needs to have complete eco-system in their control, just the stream format of CORD SDK is good enough.
 
 
 ## What next from here?
 
-* Understand the methods exposed from SDK by refering how `demo.ts` and `demo-vc.ts` files are structured.
+* Understand the methods exposed from SDK by refering how `func-test.ts` and `network-score-test.ts` files are structured.
 
 * You can refer our white paper for multiple usecases through https://cord.network
 
