@@ -13,4 +13,4 @@ RUN npm install --no-cache
 COPY src/ ./src/
 COPY res/ ./res/
 
-ENTRYPOINT [ "npm" , "run" ]
+ENTRYPOINT [ "npx" , "tsx" ]
