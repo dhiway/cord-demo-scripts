@@ -182,6 +182,90 @@ async function main() {
   } catch (error) {
     console.log(error.message);
   }
+
+  console.log(`\n🌐  Query From Chain - Aggregate Score \n`);
+  try {
+    const endpoint =
+      "http://localhost:3000/read-aggregate-score/:entityUid/:ratingType";
+    const entityUid = transformedEntry.entry.entityUid;
+    const ratingType = Cord.RatingTypeOf.overall;
+    const headers = {
+      Authorization: loginResponse.token,
+    };
+    const url = endpoint
+      .replace(":entityUid", entityUid)
+      .replace(":ratingType", ratingType);
+
+    const requestOptions = {
+      method: "GET",
+      headers,
+    };
+    await fetch(url, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("\nResponse:\n", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error.message);
+      });
+  } catch (error) {
+    console.log(error.message);
+  }
+
+  console.log(`\n🌐  Query From Chain - Chain Space Usage `);
+
+  try {
+    const endpoint =
+      "http://localhost:3000/check-chain-space-usage/:chainSpaceUri";
+    const chainSpaceUri =
+      "space:cord:c33moQ5s314vRAcSV4ZvWpEZAEF8xVC4gyYRCiLqnwXtKWfGp";
+    const headers = {
+      Authorization: loginResponse.token,
+    };
+    const url = endpoint.replace(":chainSpaceUri", chainSpaceUri);
+
+    const requestOptions = {
+      method: "GET",
+      headers,
+    };
+    await fetch(url, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("\nResponse:\n", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error.message);
+      });
+  } catch (error) {
+    console.log(error.message);
+  }
+
+  console.log(`\n🌐 Fetch the rating details from chian `);
+  try {
+    const endpoint =
+      "http://localhost:3000/fetch-rating-details-from-chain/:ratingUri";
+    const ratingUri =
+      "rating:cord:r339dTUhkUVsQTwDaY6jVSzWafyvbHZ7aK9epbWwgkbUNeMWE";
+    const headers = {
+      Authorization: loginResponse.token,
+    };
+    const url = endpoint.replace(":ratingUri", ratingUri);
+
+    const requestOptions = {
+      method: "GET",
+      headers,
+    };
+    await fetch(url, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("\nResponse:\n", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error.message);
+      });
+  } catch (error) {
+    console.log(error.message);
+  }
 }
 
 main()
