@@ -15,7 +15,7 @@
     "stream-bench": "tsx --no-cache demo/src/stream-bench"
   },
   "dependencies": {
-    "@cord.network/sdk": "^0.9.0",
+    "@cord.network/sdk": "^0.9.2",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
