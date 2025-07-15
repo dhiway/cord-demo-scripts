@@ -18,7 +18,7 @@
     "demo-asset": "tsx --no-cache src/demo-asset.ts"
   },
   "dependencies": {
-    "@cord.network/sdk": "0.9.3-4",
+    "@cord.network/sdk": "0.9.6-5",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
