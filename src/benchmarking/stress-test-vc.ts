@@ -4,8 +4,20 @@ import moment from 'moment';
 import "dotenv/config";
 import process from "process";
 import { createAccount } from '../utils/createAccount.js';
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
 
-let sampleVc = require('./sampleVc.json');
+interface Row {
+  cert_no: string;
+  name: string;
+  email: string;
+  phone: string;
+  course_name: string;
+  duration: string;
+  start_date: string;
+  issue_time?: string;   // will add on the fly
+}
 
 async function getBalance(api, address) {
   const { data: balance } = await api.query.system.account(address);
@@ -17,31 +29,55 @@ async function getNonce(api, address) {
   return nonce.toNumber();
 }
 
+
+/** Hash a single row (adds issue_time so the hash changes each run) */
+function hashRow(row: Record<string, string>): string {
+  // You can make this any high-resolution timestamp or random nonce
+  row.issue_time = Date.now().toString();
+
+  return Cord.Utils.Crypto.hashStr(JSON.stringify(row));
+}
+
+/** Stream the CSV and resolve with an array of hashes */
+async function computeHashes(csvFile: string): Promise<string[]> {
+  return new Promise<string[]>((resolve, reject) => {
+    const hashes: string[] = [];
+
+    fs.createReadStream(csvFile)
+      .pipe(csv())
+      .on('data', (row) => hashes.push(hashRow(row)))
+      .on('end', () => resolve(hashes))
+      .on('error', reject);
+  });
+}
 async function batchTransactions(api, authorIdentity, txCount, perBatch) {
   const prepStart = moment();
   let nonce = await getNonce(api, authorIdentity.address);
   let prepared = 0;
 
-  console.log(sampleVc);
-
   /* Prepare pay load */
-  let hexStr: any = [];
-  for (let i = 0; i < txCount; i++) {
-      sampleVc.id = `random-test-${i}`;
-      let hsh = Cord.Utils.Crypto.hashStr(JSON.stringify(sampleVc));
-      hexStr.push(hsh);
+  let hashes: string[] = [];
+  try {
+      const filePath = path.join(__dirname, 'student_records_300k.csv');
+      console.log(filePath);
+      console.time('hash-time');
+      hashes = await computeHashes(filePath);   // <── await here
+      console.timeEnd('hash-time');
+  } catch(error) {
+      console.error('Error while reading CSV:', error);
+      process.exit(1);
   }
 
   const prepEnd = moment();
   const prepDuration = prepEnd.diff(prepStart, 'seconds') || 1;
-  console.log(`⏱️  Preparation Done (${hexStr.length} / ${prepDuration} s). Will stream dispatch... `);
-
+    console.log(`⏱️  Reading file and preparing the fingerprint Done (${hashes.length} / ${prepDuration} s).`);
+    console.log(`Will now start anchoring to chain... `);
 
   const submitStart = moment();
-  for (let j = 0; j < txCount; j += perBatch) {
+  for (let j = 0; j < hashes.length; j += perBatch) {
     const batch = [];
-    for (let i = 0; i < perBatch && j + i < txCount; i++) {
-      batch.push(api.tx.remark.store(`${hexStr[j+i]}`));
+    for (let i = 0; i < perBatch && j + i < hashes.length; i++) {
+      batch.push(api.tx.remark.store(`${hashes[j+i]}`));
     }
 
     const signed = await api.tx.utility.batch(batch).signAsync(authorIdentity, {
@@ -89,4 +125,4 @@ async function main() {
   }
 }
 
-main();
+main().catch(console.error);
