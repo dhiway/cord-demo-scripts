@@ -19,7 +19,14 @@
   },
   "dependencies": {
     "@cord.network/sdk": "0.9.6-5",
-    "dotenv": "^16.4.5"
+    "doken-precomputer": "^0.0.4",
+    "dotenv": "^16.4.5",
+    "inquirer": "^12.9.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "pdf2json": "^3.2.0",
+    "tesseract": "^0.0.3",
+    "tesseract.js": "5"
   },
   "devDependencies": {
     "moment": "^2.30.1",
