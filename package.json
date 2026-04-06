@@ -15,10 +15,15 @@
     "demo-score": "tsx --no-cache src/demo-score.ts",
     "demo-statement": "tsx --no-cache src/func-test.ts",
     "demo-statement1": "tsx --no-cache src/func-test_v9400.ts",
-    "demo-asset": "tsx --no-cache src/demo-asset.ts"
+    "demo-asset": "tsx --no-cache src/demo-asset.ts",
+    "demo-registry": "tsx --no-cache src/demo-registry.ts",
+    "demo-registry-entry": "tsx --no-cache src/demo-registry-entry.ts",
+    "demo-simple": "tsx --no-cache src/demo-simple.ts",
+    "demo-local": "tsx --no-cache src/demo-local.ts"
   },
   "dependencies": {
-    "@cord.network/sdk": "0.9.6-5",
+    "@cord.network/sdk": "0.9.6-10",
+    "@cord.network/utils": "0.9.6-10",
     "csv-parser": "^3.2.0",
     "doken-precomputer": "^0.0.4",
     "dotenv": "^16.4.5",

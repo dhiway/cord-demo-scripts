@@ -35,9 +35,12 @@ function getChallenge(): string {
 }
 
 async function main() {
+  console.log('🚀 Starting demo...')
   const networkAddress = process.env.NETWORK_ADDRESS ? process.env.NETWORK_ADDRESS : 'ws://127.0.0.1:9944';
+  console.log(`🔗 Connecting to: ${networkAddress}`)
   Cord.ConfigService.set({ submitTxResolveOn: Cord.Chain.IS_IN_BLOCK })
   await Cord.connect(networkAddress)
+  console.log('✅ Connected to network')
 
   // Step 1: Setup Membership
   // Setup transaction author account - CORD Account.

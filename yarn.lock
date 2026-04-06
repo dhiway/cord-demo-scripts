@@ -47,115 +47,128 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cord.network/augment-api@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/augment-api@npm:0.9.6-5"
+"@cord.network/augment-api@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/augment-api@npm:0.9.6-10"
   dependencies:
-    "@cord.network/type-definitions": "npm:0.9.6-5"
+    "@cord.network/type-definitions": "npm:0.9.6-10"
     "@polkadot/rpc-augment": "npm:^15.9.1"
     "@polkadot/rpc-core": "npm:^15.9.1"
     "@polkadot/rpc-provider": "npm:^15.9.1"
-  checksum: 0b814440719056ef76b8d803f661480e8eaf7afffe62ef43b2a82e080585fcf4d4c755633de765def01aa1cc4065a8e5302eb9b4609640163d1fcad930a6b961
+  checksum: 9755edbf709454e4fd9f75ae4ad6e477538f869ebf7bfdc00abf60fe5e6df44b57df3c84f7c7f1ffda574bc2f7baad0f18ad6287fdcbfb6386ba059bbd4e7a7b
   languageName: node
   linkType: hard
 
-"@cord.network/config@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/config@npm:0.9.6-5"
+"@cord.network/config@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/config@npm:0.9.6-10"
   dependencies:
-    "@cord.network/type-definitions": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: df7a1a4fa359b24ab5272812923f5aee69faa37c0d65cff5e7ed984e5d333f6b94f475580f582f886fdc9ddc9498d8de5be41938206805dc205c402af8db89e4
+    "@cord.network/type-definitions": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: bd03ca82608c05b523e27131a8c3b1f51e19055c1c0cf958a4bccb6814834f3ff9a27469f6580c5d9515209c542102a9c727be0338764e8e4e1079584b07716e
   languageName: node
   linkType: hard
 
-"@cord.network/entry@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/entry@npm:0.9.6-5"
+"@cord.network/entry@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/entry@npm:0.9.6-10"
   dependencies:
-    "@cord.network/config": "npm:0.9.6-5"
-    "@cord.network/identifier": "npm:0.9.6-5"
-    "@cord.network/network": "npm:0.9.6-5"
-    "@cord.network/profile": "npm:0.9.6-5"
-    "@cord.network/registry": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: 15d99432d1d7fa9317b10764a550ea21233b7e194acfcfca57017e1158f76b2ecf7cf9bc01f9bd7b233834c373a463e1810dde86274b3b3706f35aeee6930539
+    "@cord.network/config": "npm:0.9.6-10"
+    "@cord.network/identifier": "npm:0.9.6-10"
+    "@cord.network/network": "npm:0.9.6-10"
+    "@cord.network/profile": "npm:0.9.6-10"
+    "@cord.network/registry": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: 555d0d7468fe0f7e18234c2830afd43713a2ea62d1cd4280bce535e311bd1de3bf3c625800f55eaa0af42ba8617034a0006eea19648dbdd54845da0583933afd
   languageName: node
   linkType: hard
 
-"@cord.network/identifier@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/identifier@npm:0.9.6-5"
+"@cord.network/identifier@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/identifier@npm:0.9.6-10"
   dependencies:
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: 6db5f54082dbd6b450fd3d6635acb275dfc3c003c956b985fb9af1802cdcb137bbd4b525dff3f3765c2d9dbc4fcd718ca924a4d2a82cc8b38fa2c3b70305fb8f
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: 6492b66da879c985b25b12ad63b555ccf966405f3f64224304ed373b3432042e4b5512dfe0704bdf2d16f9c366c38114a85a0c1aea7ad948e81a7ec45a783ffa
   languageName: node
   linkType: hard
 
-"@cord.network/network@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/network@npm:0.9.6-5"
+"@cord.network/network@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/network@npm:0.9.6-10"
   dependencies:
-    "@cord.network/config": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
+    "@cord.network/config": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
     "@polkadot/api": "npm:^15.9.1"
     "@polkadot/types": "npm:^15.9.1"
-  checksum: f12375413218cac74fb73c8154a4470770054dd82d920a0f2c69a2c85467b223aca11666cc6d4a895e40a5a9ddb7b779c28195da766c074f86028e3350ea6d9a
+  checksum: 7eee82fc3cfe4b7492f4587544a8aa8ff26a384f9fb1fc90962f8ecfc8b707e93fc4ea8f73599037c74a8b6c41cd9223ad73269ff8110d039fccdf5946c91c5b
   languageName: node
   linkType: hard
 
-"@cord.network/profile@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/profile@npm:0.9.6-5"
+"@cord.network/profile@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/profile@npm:0.9.6-10"
   dependencies:
-    "@cord.network/config": "npm:0.9.6-5"
-    "@cord.network/identifier": "npm:0.9.6-5"
-    "@cord.network/network": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: 61bef8186d473c6b05398a9cb1e2b252a046587d74c9d2fcf8740915c3a9faf7552d5695d7ef6bedf03a50929cf05e7c1277b05ec0a7fba17d942a869c19b5bf
+    "@cord.network/config": "npm:0.9.6-10"
+    "@cord.network/identifier": "npm:0.9.6-10"
+    "@cord.network/network": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: 1f0cbb786566ccff09ee2a487ffc8f124c7bd981d95edfc01a3544f8823717dbfd479f635d7e8cdd8510285bb18486ccb7eec10c159c4cd619b7c4074f5decf6
   languageName: node
   linkType: hard
 
-"@cord.network/registry@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/registry@npm:0.9.6-5"
+"@cord.network/registry@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/registry@npm:0.9.6-10"
   dependencies:
-    "@cord.network/config": "npm:0.9.6-5"
-    "@cord.network/identifier": "npm:0.9.6-5"
-    "@cord.network/network": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: 63e19aa39d1ce36e5fbd3c39f024a016fb57ed64bd4bf716e177949424e28626e1752a056b2cd1dedd4a3d6d59a095dc62c26590225ce04d7558df55cf82e424
+    "@cord.network/config": "npm:0.9.6-10"
+    "@cord.network/identifier": "npm:0.9.6-10"
+    "@cord.network/network": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: 011697d978f2e6073dc29c5f5063d6271e63eafc36553d25d6c174b28799313abb62ae752d1ebef4b9acec30df09cf534a4e80587ec5eada2a5c8c4534d8210f
   languageName: node
   linkType: hard
 
-"@cord.network/sdk@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/sdk@npm:0.9.6-5"
+"@cord.network/sdk@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/sdk@npm:0.9.6-10"
   dependencies:
-    "@cord.network/config": "npm:0.9.6-5"
-    "@cord.network/entry": "npm:0.9.6-5"
-    "@cord.network/identifier": "npm:0.9.6-5"
-    "@cord.network/network": "npm:0.9.6-5"
-    "@cord.network/profile": "npm:0.9.6-5"
-    "@cord.network/registry": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
-    "@cord.network/utils": "npm:0.9.6-5"
-  checksum: 98229a9ea8e988ebcaf5a4e212821f3dcfc2ee146d8d3dbc79cd575607d065871abb4fb9331f7e9afa2cec6e0857be9166b83fbadec5535830aa1b6eccf081eb
+    "@cord.network/config": "npm:0.9.6-10"
+    "@cord.network/entry": "npm:0.9.6-10"
+    "@cord.network/identifier": "npm:0.9.6-10"
+    "@cord.network/network": "npm:0.9.6-10"
+    "@cord.network/profile": "npm:0.9.6-10"
+    "@cord.network/registry": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
+  checksum: c628fa89269eda0d5ba517c18ee39e81df29b34d10e251ee53804b0ab231782663d66ac3d2782094e7ab3627e1cf5a9cd889f5ab8bf253bb38f2658e0e71067f
   languageName: node
   linkType: hard
 
-"@cord.network/type-definitions@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/type-definitions@npm:0.9.6-5"
+"@cord.network/type-definitions@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/type-definitions@npm:0.9.6-10"
   dependencies:
     "@polkadot/types": "npm:^15.9.1"
-  checksum: f38a28fa9d6f3c96089c4163559f9ee5b47b18b3f349dffd5840076c8ec6ada831969260cbd32e5cca57273d161b7753cdde651d8b983b122f144a4c437c3f3f
+  checksum: 10cb595181694445c5c01c7236631d94177b29adebfc537b19865e5120f6a5dfe200311d855aa0853cdc5ccf0bfa67565c8abf27186a4ccfb04d3865ddd5dcbd
+  languageName: node
+  linkType: hard
+
+"@cord.network/types@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/types@npm:0.9.6-10"
+  dependencies:
+    "@polkadot/api": "npm:^15.9.1"
+    "@polkadot/keyring": "npm:^13.4.3"
+    "@polkadot/types": "npm:^15.9.1"
+    "@polkadot/util": "npm:^13.4.3"
+    "@polkadot/util-crypto": "npm:^13.4.3"
+  checksum: c31720cab2d1a84cc2ce690ca42958995e213e0c07c7b0c157abfb6e93c977f775888a7ef1fa85e9d43fd027f34a77cf2afa613ca74a6dc47a3f2cfc851774bb
   languageName: node
   linkType: hard
 
@@ -172,25 +185,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cord.network/types@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/types@npm:0.9.6-5"
+"@cord.network/utils@npm:0.9.6-10":
+  version: 0.9.6-10
+  resolution: "@cord.network/utils@npm:0.9.6-10"
   dependencies:
-    "@polkadot/api": "npm:^15.9.1"
-    "@polkadot/keyring": "npm:^13.4.3"
-    "@polkadot/types": "npm:^15.9.1"
-    "@polkadot/util": "npm:^13.4.3"
-    "@polkadot/util-crypto": "npm:^13.4.3"
-  checksum: 0b631c64fa39d2f6a06391962615a6569d410808b63536435e5c57017195edcda80abf423b476395ad2e18bdbd5c27b6d36799f08c71e5e3f23e94236962d424
-  languageName: node
-  linkType: hard
-
-"@cord.network/utils@npm:0.9.6-5":
-  version: 0.9.6-5
-  resolution: "@cord.network/utils@npm:0.9.6-5"
-  dependencies:
-    "@cord.network/augment-api": "npm:0.9.6-5"
-    "@cord.network/types": "npm:0.9.6-5"
+    "@cord.network/augment-api": "npm:0.9.6-10"
+    "@cord.network/types": "npm:0.9.6-10"
     "@polkadot/api": "npm:^15.9.1"
     "@polkadot/keyring": "npm:^13.4.3"
     "@polkadot/util": "npm:^13.4.3"
@@ -199,7 +199,7 @@ __metadata:
     multiformats: "npm:^9.0.0"
     tweetnacl: "npm:^1.0.3"
     uuid: "npm:^9.0.1"
-  checksum: 133640f5636952c4811150f015f596f9a0f25178236e4e1e262586cd660ab82a1cc13f5a194c902da26a5aa423cfc2933f687edcf68a05868792f39d397bf55e
+  checksum: de5b4314e87784df8c97cc4880bd64f061a8cc1d5828bb962ea2f77a2fd4a8465d8748e2325b65e65387e6dd2ed2cc1f5a4c32cbac6fd85837f2fc17194a565b
   languageName: node
   linkType: hard
 
@@ -1428,7 +1428,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "cord-demo-scripts@workspace:."
   dependencies:
-    "@cord.network/sdk": "npm:0.9.6-5"
+    "@cord.network/sdk": "npm:0.9.6-10"
+    "@cord.network/utils": "npm:0.9.6-10"
     csv-parser: "npm:^3.2.0"
     doken-precomputer: "npm:^0.0.4"
     dotenv: "npm:^16.4.5"
