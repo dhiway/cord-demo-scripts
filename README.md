@@ -6,6 +6,38 @@
 * Have [`yarn`](https://yarnpkg.com/) installed and ready.
 * Any web browser (which supports javascript) to check transactions on the CORD Chain.
 
+## Available Demo Scripts
+
+The repository includes several demo scripts for different CORD SDK versions and use cases:
+
+### Legacy Scripts (SDK 0.9.6-5 and earlier)
+- `yarn demo` - Main credential demo (src/demo.ts)
+- `yarn demo-vc` - Verifiable credentials demo (src/demo-vc.ts)
+- `yarn demo-statement` - Statement/functional test (src/func-test.ts)
+- `yarn demo-statement1` - Updated statement test for v9400 (src/func-test_v9400.ts)
+- `yarn demo-score` - Network score demo (src/demo-score.ts)
+- `yarn demo-asset` - Asset management demo (src/demo-asset.ts)
+- `yarn demo-meta` - Metadata demo (src/demo-meta.ts)
+- `yarn demo-messaging` - Messaging demo (src/demo-messaging.ts)
+
+### New Registry/Entry Scripts (SDK 0.9.6-10+)
+These scripts demonstrate the new Registry and Entry APIs:
+
+- `yarn demo-registry` - Registry creation and management demo
+- `yarn demo-registry-entry` - Full registry + entry lifecycle (create, update, verify, revoke, transfer ownership)
+- `yarn demo-simple` - Minimal example of Registry/Entry operations
+- `yarn demo-local` - Interactive step-by-step demo with user prompts
+
+Run with staging network:
+```bash
+NETWORK_ADDRESS=wss://registries.demo.cord.network yarn demo-registry
+```
+
+Run with local node:
+```bash
+yarn demo-registry
+```
+
 ## How to run the demo code (with staging network)
 
 * Step 1: checkout/clone this repository.
@@ -55,7 +87,10 @@ Example : `sudo docker run --env NETWORK_ADDRESS='ws://host.docker.internal:9944
 
 ## What next from here?
 
-* Understand the methods exposed from SDK by refering how `func-test.ts` and `network-score-test.ts` files are structured.
+* Understand the methods exposed from SDK by referring to:
+  - `src/func-test.ts` and `network-score-test.ts` for legacy APIs
+  - `src/demo-registry-entry.ts` for new Registry/Entry APIs with full lifecycle operations
+  - `src/demo-simple.ts` for minimal examples of the new SDK
 
 * You can refer our white paper for multiple usecases through https://cord.network
 
